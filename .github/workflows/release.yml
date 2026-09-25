@@ -51,15 +51,43 @@ jobs:
       - name: Upgrade npm for trusted publishing
         run: npm install --global npm@12.0.2
 
+      - name: Fetch release app ID from Infisical
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_RELEASE_IDENTITY_ID }}
+          oidc-audience: https://github.com/yielded-dev
+          project-id: e95eeea5-854c-415c-8311-967b01f6c3ff
+          env-slug: dev
+          secret-path: /
+          secret-name: RELEASE_APP_ID
+          include-imports: "false"
+
+      - name: Fetch release app private key from Infisical
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_RELEASE_IDENTITY_ID }}
+          oidc-audience: https://github.com/yielded-dev
+          project-id: e95eeea5-854c-415c-8311-967b01f6c3ff
+          env-slug: dev
+          secret-path: /
+          secret-name: RELEASE_APP_PRIVATE_KEY
+          include-imports: "false"
+
       # App-authored updates trigger ordinary PR CI, unlike GITHUB_TOKEN pushes.
       - name: Mint the release token
         id: app-token
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
-          app-id: ${{ secrets.RELEASE_APP_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          app-id: ${{ env.RELEASE_APP_ID }}
+          private-key: ${{ env.RELEASE_APP_PRIVATE_KEY }}
           permission-contents: write
           permission-pull-requests: write
+
+      - name: Clear release app credentials from later steps
+        if: ${{ always() }}
+        run: printf '%s\n' 'RELEASE_APP_ID=' 'RELEASE_APP_PRIVATE_KEY=' >> "$GITHUB_ENV"
 
       - name: Create release pull request or publish
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
