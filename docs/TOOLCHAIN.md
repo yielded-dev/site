@@ -7,7 +7,7 @@ catalog is the source of truth for exact shared versions.
 | Tool                 | Version         |
 | -------------------- | --------------- |
 | Bun                  | `1.4.2`         |
-| Vite+                | `1.0.0-rc.0`    |
+| Vite+                | `0.3.3`         |
 | TypeScript           | `7.0.2`         |
 | Effect TypeScript-Go | `0.45.0`        |
 | Astro                | `7.3.5`         |

@@ -28,8 +28,8 @@
     "@types/node": "catalog:",
     "alchemy": "catalog:",
     "effect": "catalog:",
-    "oxfmt": "0.70.0",
-    "oxlint": "1.85.0",
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
@@ -47,7 +47,7 @@
     "astro": "7.3.5",
     "effect": "4.0.0-rc.117",
     "typescript": "7.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0-rc.0",
-    "vite-plus": "1.0.0-rc.0"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3",
+    "vite-plus": "0.3.3"
   }
 }
