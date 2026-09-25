@@ -1,0 +1,219 @@
+---
+import "@yielded/starlight-theme/tokens.css";
+
+import Mark from "@yielded/starlight-theme/components/Mark.astro";
+
+interface Props {
+  readonly title: string;
+  readonly description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <script is:inline>
+      // Shares Starlight's preference key, so the choice carries across every docs site.
+      const stored = localStorage.getItem("starlight-theme");
+      const theme = stored || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+
+      document.documentElement.dataset.theme = theme === "light" ? "light" : "dark";
+    </script>
+  </head>
+  <body>
+    <header class="bar">
+      <a class="wordmark" href="/" aria-label="yielded.dev home">
+        <Mark size={24} />
+        <span>yielded</span>
+      </a>
+      <nav aria-label="Primary">
+        <a href="/sync/">Sync</a>
+        <a href="/auth/">Auth</a>
+        <a class="icon-link" href="https://github.com/yielded-dev" aria-label="yielded on GitHub">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2 0 1.9 1.2 1.9 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8 0 3.2.9.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1 .9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0 0 12 .3"
+            ></path>
+          </svg>
+        </a>
+        <button class="icon-link" type="button" data-theme-toggle aria-label="Toggle color theme">
+          <svg class="sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="1.8"></circle>
+            <path
+              d="M12 2v2.5M12 19.5V22M4.2 4.2 6 6M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"></path>
+          </svg>
+          <svg class="moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path
+              d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linejoin="round"></path>
+          </svg>
+        </button>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <span>© {new Date().getFullYear()} Yielded</span>
+      <a href="https://github.com/yielded-dev">GitHub</a>
+    </footer>
+
+    <script>
+      document.querySelector("[data-theme-toggle]")?.addEventListener("click", () => {
+        const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+
+        document.documentElement.dataset.theme = next;
+        try {
+          localStorage.setItem("starlight-theme", next);
+        } catch {
+          // Storage can be unavailable in private windows; the toggle still applies for this visit.
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: dark;
+    background: var(--yl-bg);
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--yl-bg);
+    color: var(--yl-text);
+    font-family: var(--yl-font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main {
+    flex: 1;
+    overflow-x: clip;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  code,
+  pre {
+    font-family: var(--yl-font-mono);
+  }
+</style>
+
+<style>
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 4rem;
+    padding: 0 clamp(1rem, 4vw, 2rem);
+    border-bottom: 1px solid var(--yl-border);
+    background: color-mix(in srgb, var(--yl-bg) 86%, transparent);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+  }
+
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-weight: 600;
+    font-size: 1.125rem;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 3vw, 1.5rem);
+  }
+
+  nav a {
+    color: var(--yl-text-muted);
+    font-size: 0.9375rem;
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: var(--yl-text);
+  }
+
+  .icon-link {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.5rem;
+    background: none;
+    color: var(--yl-text-muted);
+    cursor: pointer;
+  }
+
+  .icon-link:hover {
+    background: var(--yl-bg-raised);
+    color: var(--yl-text);
+  }
+
+  :global([data-theme="dark"]) .moon,
+  :global([data-theme="light"]) .sun {
+    display: none;
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 2rem clamp(1rem, 4vw, 2rem);
+    border-top: 1px solid var(--yl-border);
+    color: var(--yl-text-faint);
+    font-size: 0.875rem;
+  }
+
+  .footer a {
+    color: var(--yl-text-muted);
+    text-decoration: none;
+  }
+</style>

@@ -1,0 +1,331 @@
+/* Maps yielded.dev tokens onto Starlight and restyles its chrome. */
+
+:root {
+  --sl-font: var(--yl-font-sans);
+  --sl-font-mono: var(--yl-font-mono);
+  --sl-text-h1: 2.5rem;
+  --sl-content-width: 46rem;
+  --sl-sidebar-width: 17rem;
+
+  --sl-color-accent-low: color-mix(in srgb, var(--yl-accent) 16%, var(--yl-bg));
+  --sl-color-accent: var(--yl-accent);
+  --sl-color-accent-high: color-mix(in srgb, var(--yl-accent) 70%, white);
+
+  --sl-color-white: var(--yl-text);
+  --sl-color-gray-1: #e2e0d6;
+  --sl-color-gray-2: #c3c5ba;
+  --sl-color-gray-3: var(--yl-text-muted);
+  --sl-color-gray-4: var(--yl-text-faint);
+  --sl-color-gray-5: var(--yl-border-strong);
+  --sl-color-gray-6: #1f201c;
+  --sl-color-black: var(--yl-bg);
+
+  --sl-color-bg-nav: color-mix(in srgb, var(--yl-bg) 86%, transparent);
+  --sl-color-bg-sidebar: var(--yl-bg);
+  --sl-color-hairline-light: var(--yl-border);
+  --sl-color-hairline: var(--yl-border);
+  --sl-color-hairline-shade: var(--yl-border-strong);
+  --sl-color-text-accent: var(--yl-accent);
+  --sl-color-bg-inline-code: var(--yl-bg-raised);
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: color-mix(in srgb, var(--yl-accent) 10%, white);
+  --sl-color-accent: var(--yl-accent);
+  --sl-color-accent-high: color-mix(in srgb, var(--yl-accent) 75%, black);
+
+  --sl-color-white: var(--yl-text);
+  --sl-color-gray-1: #24262d;
+  --sl-color-gray-2: #3a3e48;
+  --sl-color-gray-3: var(--yl-text-muted);
+  --sl-color-gray-4: var(--yl-text-faint);
+  --sl-color-gray-5: var(--yl-border-strong);
+  --sl-color-gray-6: #efefeb;
+  --sl-color-gray-7: #f6f6f3;
+  --sl-color-black: var(--yl-bg);
+
+  --sl-color-bg-nav: color-mix(in srgb, var(--yl-bg) 86%, transparent);
+  --sl-color-bg-sidebar: var(--yl-bg);
+  --sl-color-text-accent: var(--yl-accent);
+  --sl-color-bg-inline-code: var(--yl-bg-sunken);
+}
+
+/* Header: translucent bar with a hairline, like the landing page. */
+header.header {
+  border-bottom-color: var(--yl-border);
+  backdrop-filter: saturate(140%) blur(14px);
+  -webkit-backdrop-filter: saturate(140%) blur(14px);
+}
+
+/* Let the library switcher menu escape the title column. */
+header.header .title-wrapper {
+  overflow: visible;
+}
+
+/* Sidebar: quiet group labels and an accent rail on the current page. */
+#starlight__sidebar .large {
+  color: var(--sl-color-gray-4);
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#starlight__sidebar a {
+  border-radius: 0 0.375rem 0.375rem 0;
+  border-inline-start: 2px solid transparent;
+  color: var(--sl-color-gray-2);
+}
+
+#starlight__sidebar a:hover {
+  color: var(--sl-color-white);
+}
+
+#starlight__sidebar a[aria-current="page"],
+#starlight__sidebar a[aria-current="page"]:hover {
+  border-inline-start-color: var(--sl-color-accent);
+  background: var(--sl-color-accent-low);
+  color: var(--sl-color-white);
+  font-weight: 600;
+}
+
+/* Content typography. */
+.sl-markdown-content,
+.content-panel h1 {
+  font-feature-settings: "ss02";
+}
+
+.sl-markdown-content :is(h2, h3, h4) {
+  font-weight: 620;
+  letter-spacing: -0.025em;
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h2 {
+  margin-top: 2.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--yl-border);
+}
+
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: var(--sl-color-white);
+  text-decoration-color: color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
+}
+
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+  text-decoration-color: var(--sl-color-accent);
+}
+
+.sl-markdown-content :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--yl-border);
+  border-radius: 0.3rem;
+  font-size: 0.875em;
+}
+
+.sl-markdown-content table {
+  display: table;
+  width: 100%;
+  font-size: var(--sl-text-sm);
+}
+
+.sl-markdown-content :is(th, td) {
+  padding: 0.6rem 0.8rem;
+  border-color: var(--yl-border);
+}
+
+.sl-markdown-content th {
+  background: var(--yl-bg-raised);
+  font-weight: 600;
+}
+
+/* Right-hand table of contents. */
+starlight-toc h2 {
+  color: var(--sl-color-gray-4);
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+starlight-toc a[aria-current="true"] {
+  color: var(--sl-color-accent);
+}
+
+/* Splash pages: faint grid behind the hero, fading out below it. */
+:root[data-has-hero] body {
+  background-image:
+    linear-gradient(var(--yl-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--yl-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center top;
+}
+
+:root[data-has-hero] .main-frame {
+  background: linear-gradient(to bottom, transparent 0, var(--yl-bg) 34rem);
+}
+
+/* Buttons: pill-shaped, primary filled with the library accent. */
+.sl-link-button {
+  padding: 0.6rem 1.15rem;
+  border-radius: 999px;
+  font-size: var(--sl-text-sm);
+  font-weight: 600;
+}
+
+.sl-link-button.primary {
+  border-color: var(--sl-color-accent);
+  background: var(--sl-color-accent);
+  color: var(--yl-bg);
+}
+
+.sl-link-button.primary:hover {
+  border-color: color-mix(in srgb, var(--sl-color-accent) 85%, var(--yl-text));
+  background: color-mix(in srgb, var(--sl-color-accent) 85%, var(--yl-text));
+}
+
+.sl-link-button.secondary {
+  border-color: var(--yl-border-strong);
+  background: transparent;
+  color: var(--sl-color-white);
+}
+
+.sl-link-button.secondary:hover {
+  border-color: var(--sl-color-gray-3);
+}
+
+/* Cards on splash pages read as columns under a rule rather than boxes. */
+:root[data-has-hero] .card-grid {
+  gap: 0 2.5rem;
+}
+
+@media (min-width: 72rem) {
+  :root[data-has-hero] .card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+:root[data-has-hero] .card {
+  padding: 1.25rem 0 1.5rem;
+  border: 0;
+  border-top: 1px solid var(--yl-border-strong);
+  border-radius: 0;
+  background: none;
+}
+
+:root[data-has-hero] .card .title {
+  font-size: var(--sl-text-lg);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+}
+
+:root[data-has-hero] .card .body {
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+  line-height: 1.6;
+}
+
+.card {
+  border-color: var(--yl-border);
+  border-radius: 0.75rem;
+  background: var(--yl-bg-raised);
+}
+
+.card .icon {
+  border-radius: 0.5rem;
+}
+
+/* Link cards: quiet until hovered. */
+.sl-link-card {
+  border-color: var(--yl-border);
+  border-radius: 0.75rem;
+  background: var(--yl-bg-raised);
+  box-shadow: none;
+  transition: border-color 150ms ease;
+}
+
+.sl-link-card:hover {
+  border-color: color-mix(in srgb, var(--sl-color-accent) 60%, var(--yl-border));
+  background: var(--yl-bg-raised);
+}
+
+.sl-link-card .title {
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}
+
+.sl-link-card .description {
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+}
+
+.sl-link-card:hover .icon {
+  color: var(--sl-color-accent);
+}
+
+/* Tabs: accent underline on the active tab. */
+starlight-tabs [role="tablist"] {
+  border-bottom-color: var(--yl-border);
+}
+
+starlight-tabs [role="tab"] {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-sm);
+}
+
+starlight-tabs [role="tab"][aria-selected="true"] {
+  border-color: var(--sl-color-accent);
+  color: var(--sl-color-white);
+}
+
+/* Asides: a tinted panel with a rule and a small mono label. */
+.starlight-aside {
+  padding: 1rem 1.25rem;
+  border: 0;
+  border-inline-start: 2px solid var(--sl-color-asides-border);
+  border-radius: 0 0.5rem 0.5rem 0;
+  background: color-mix(in srgb, var(--sl-color-asides-border) 9%, transparent);
+}
+
+.starlight-aside__title {
+  gap: 0.45rem;
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.starlight-aside__icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.starlight-aside--note {
+  --sl-color-asides-border: var(--sl-color-accent);
+  --sl-color-asides-text-accent: var(--sl-color-accent);
+}
+
+/* Unframed shell blocks get a little air for the copy button. */
+.expressive-code .frame:not(.has-title):not(.is-terminal) pre {
+  padding-inline-end: 3rem;
+}
+
+/* Pagination. */
+.pagination-links a {
+  border-color: var(--yl-border);
+  border-radius: 0.75rem;
+  box-shadow: none;
+}
+
+.pagination-links a:hover {
+  border-color: var(--sl-color-accent);
+}
+
+.pagination-links .link-title {
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}

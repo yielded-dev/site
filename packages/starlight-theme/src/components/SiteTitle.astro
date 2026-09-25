@@ -1,0 +1,247 @@
+---
+import libraryId from "virtual:yielded/library";
+
+import { getLibrary, libraries } from "../libraries.ts";
+import Mark from "./Mark.astro";
+
+const current = getLibrary(libraryId);
+const { siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<div class="yl-title">
+  <a class="yl-wordmark" href="/" aria-label="yielded.dev home">
+    <Mark />
+    <span>yielded</span>
+  </a>
+  <span class="yl-slash" aria-hidden="true">/</span>
+  <details class="yl-switcher" data-yl-switcher>
+    <summary aria-label={`${current.name} docs. Switch library`}>
+      <span class="yl-dot" aria-hidden="true"></span>
+      <span translate="no">{current.name}</span>
+      <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14">
+        <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </summary>
+    <div class="yl-menu">
+      <p class="yl-menu-label">Libraries</p>
+      <ul>
+        {
+          libraries.map((library) => {
+            const isCurrent = library.id === current.id;
+            const href = isCurrent ? siteTitleHref : `${library.base}/`;
+            const style = `--yl-item-dark:${library.accent.dark};--yl-item-light:${library.accent.light}`;
+
+            return (
+              <li>
+                {library.status === "live" ? (
+                  <a href={href} class="yl-item" aria-current={isCurrent ? "page" : undefined} style={style}>
+                    <span class="yl-item-dot" aria-hidden="true" />
+                    <span class="yl-item-text">
+                      <span class="yl-item-name">{library.name}</span>
+                      <span class="yl-item-tagline">{library.tagline}</span>
+                    </span>
+                  </a>
+                ) : (
+                  <span class="yl-item" aria-disabled="true" style={style}>
+                    <span class="yl-item-dot" aria-hidden="true" />
+                    <span class="yl-item-text">
+                      <span class="yl-item-name">
+                        {library.name} <span class="yl-soon">Soon</span>
+                      </span>
+                      <span class="yl-item-tagline">{library.tagline}</span>
+                    </span>
+                  </span>
+                )}
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+  </details>
+</div>
+
+<script>
+  const switchers = document.querySelectorAll<HTMLDetailsElement>("[data-yl-switcher]");
+
+  document.addEventListener("click", (event) => {
+    for (const switcher of switchers) {
+      if (switcher.open && !switcher.contains(event.target as Node)) switcher.open = false;
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+
+    for (const switcher of switchers) {
+      if (!switcher.open) continue;
+      switcher.open = false;
+      switcher.querySelector("summary")?.focus();
+    }
+  });
+</script>
+
+<style>
+  .yl-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .yl-wordmark {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--sl-color-white);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+  }
+
+  .yl-slash {
+    color: var(--sl-color-gray-4);
+    font-size: 1.25rem;
+    font-weight: 300;
+  }
+
+  .yl-switcher {
+    position: relative;
+  }
+
+  .yl-switcher summary {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.55rem 0.3rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--sl-color-white);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .yl-switcher summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .yl-switcher summary:hover,
+  .yl-switcher[open] summary {
+    border-color: var(--sl-color-hairline-shade);
+    background: var(--sl-color-gray-6);
+  }
+
+  .yl-switcher summary svg {
+    color: var(--sl-color-gray-3);
+    transition: transform 150ms ease;
+  }
+
+  .yl-switcher[open] summary svg {
+    transform: rotate(180deg);
+  }
+
+  .yl-dot,
+  .yl-item-dot {
+    flex: none;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: var(--yl-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--yl-accent) 22%, transparent);
+  }
+
+  .yl-menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    width: min(20rem, calc(100vw - 2rem));
+    padding: 0.4rem;
+    border: 1px solid var(--sl-color-hairline-shade);
+    border-radius: 0.75rem;
+    background: var(--yl-bg-raised);
+    box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.45);
+  }
+
+  .yl-menu-label {
+    margin: 0;
+    padding: 0.4rem 0.6rem 0.3rem;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+    font-family: var(--sl-font-mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .yl-menu ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .yl-item {
+    --yl-accent: var(--yl-item-dark);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: 0.5rem;
+    color: var(--sl-color-white);
+    text-decoration: none;
+  }
+
+  :global([data-theme="light"]) .yl-item {
+    --yl-accent: var(--yl-item-light);
+  }
+
+  .yl-item .yl-item-dot {
+    margin-top: 0.4rem;
+  }
+
+  a.yl-item:hover,
+  a.yl-item[aria-current="page"] {
+    background: var(--sl-color-gray-6);
+  }
+
+  .yl-item[aria-disabled="true"] {
+    opacity: 0.6;
+  }
+
+  .yl-item-text {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .yl-item-name {
+    font-weight: 600;
+  }
+
+  .yl-item-tagline {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+    line-height: 1.35;
+  }
+
+  .yl-soon {
+    margin-left: 0.25rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--sl-color-hairline-shade);
+    border-radius: 999px;
+    color: var(--sl-color-gray-2);
+    font-family: var(--sl-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 400;
+    vertical-align: 0.1em;
+  }
+
+  @media (max-width: 30rem) {
+    .yl-wordmark span {
+      display: none;
+    }
+  }
+</style>

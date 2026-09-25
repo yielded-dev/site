@@ -1,0 +1,91 @@
+---
+/** An install command with a copy button. */
+interface Props {
+  readonly command: string;
+}
+
+const { command } = Astro.props;
+---
+
+<div class="yl-command not-content">
+  <code><span aria-hidden="true">$</span> {command}</code>
+  <button type="button" data-yl-copy={command} aria-label={`Copy "${command}"`}>
+    <svg class="copy" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+      <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"></rect>
+      <path d="M10.5 3.5v-.5A1.5 1.5 0 0 0 9 1.5H4A1.5 1.5 0 0 0 2.5 3v5A1.5 1.5 0 0 0 4 9.5h.5" fill="none" stroke="currentColor" stroke-width="1.3"></path>
+    </svg>
+    <svg class="done" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+      <path d="m3 8.5 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  </button>
+</div>
+
+<script>
+  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-yl-copy]")) {
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.ylCopy ?? "");
+      } catch {
+        return;
+      }
+
+      button.dataset.copied = "";
+      setTimeout(() => delete button.dataset.copied, 1600);
+    });
+  }
+</script>
+
+<style>
+  .yl-command {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-width: 100%;
+    padding: 0.25rem 0.3rem 0.25rem 0.9rem;
+    border: 1px solid var(--yl-border-strong);
+    border-radius: 999px;
+    background: var(--yl-bg-sunken);
+  }
+
+  code {
+    overflow-x: auto;
+    color: var(--yl-text);
+    font-family: var(--yl-font-mono);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  code span {
+    color: var(--yl-text-faint);
+  }
+
+  button {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--yl-text-faint);
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: var(--yl-bg-raised);
+    color: var(--yl-text);
+  }
+
+  .done,
+  button[data-copied] .copy {
+    display: none;
+  }
+
+  button[data-copied] .done {
+    display: block;
+    color: var(--yl-accent);
+  }
+</style>

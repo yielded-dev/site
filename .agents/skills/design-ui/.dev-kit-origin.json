@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "selector": "design-ui",
+  "name": "design-ui",
+  "baseDigest": "sha256:78462959652ee831c82689cef9fad45c0ecf7a87189bb03f7884a9dc442f3ff7",
+  "source": {
+    "type": "bundled",
+    "version": "2.0.2"
+  }
+}

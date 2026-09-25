@@ -1,0 +1,61 @@
+---
+import { libraries } from "@yielded/starlight-theme/libraries";
+
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Not found — yielded" description="This page does not exist.">
+  <section class="missing">
+    <p class="code">404</p>
+    <h1>Page not found</h1>
+    <p>The docs live here:</p>
+    <ul>
+      {
+        libraries
+          .filter((library) => library.status === "live")
+          .map((library) => (
+            <li>
+              <a href={`${library.base}/`}>{library.name}</a>
+            </li>
+          ))
+      }
+    </ul>
+  </section>
+</Layout>
+
+<style>
+  .missing {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: clamp(4rem, 14vw, 9rem) clamp(1rem, 4vw, 2rem);
+  }
+
+  .code {
+    margin: 0;
+    color: var(--yl-accent);
+    font-family: var(--yl-font-mono);
+  }
+
+  h1 {
+    margin: 0.5rem 0 1rem;
+    font-size: clamp(2rem, 5vw, 3rem);
+    letter-spacing: -0.04em;
+  }
+
+  p {
+    color: var(--yl-text-muted);
+  }
+
+  ul {
+    display: flex;
+    gap: 1.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    font-weight: 600;
+    text-decoration-color: var(--yl-accent);
+    text-underline-offset: 0.2em;
+  }
+</style>

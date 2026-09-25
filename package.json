@@ -1,0 +1,51 @@
+{
+  "name": "yielded-site",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "prepare": "vp config --no-agent --hooks-dir .vite-hooks",
+    "patch:tsgo": "effect-tsgo patch --typescript",
+    "changeset": "bun x changeset",
+    "changeset:version": "bun x changeset version",
+    "ci:version": "bun x changeset version && bun install",
+    "dev": "vp run @yielded/landing#dev",
+    "check": "vp check && vp run -r --concurrency-limit 1 typecheck && tsc --noEmit -p tsconfig.json",
+    "build": "vp run -r build",
+    "ready": "vp run check && vp run build",
+    "release": "vp run ready && bun x changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "0.7.0",
+    "@changesets/cli": "2.31.0",
+    "@effect/tsgo": "catalog:",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "@types/node": "catalog:",
+    "alchemy": "catalog:",
+    "effect": "catalog:",
+    "oxfmt": "0.70.0",
+    "oxlint": "1.85.0",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
+  },
+  "packageManager": "bun@1.4.0",
+  "catalog": {
+    "@astrojs/starlight": "0.42.4",
+    "@effect/tsgo": "0.45.0",
+    "@types/node": "26.1.2",
+    "alchemy": "2.0.0-beta.79",
+    "astro": "7.3.5",
+    "effect": "4.0.0-rc.117",
+    "typescript": "7.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0-rc.0",
+    "vite-plus": "1.0.0-rc.0"
+  }
+}

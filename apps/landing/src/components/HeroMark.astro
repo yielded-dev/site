@@ -1,0 +1,71 @@
+---
+/** The yielded asterisk at display size, one stroke per library, drawn in on load. */
+import { libraries } from "@yielded/starlight-theme/libraries";
+
+// Stroke order matches the mark: vertical, then the two diagonals.
+const strokes = [
+  { d: "M100 22v156", library: libraries[0] },
+  { d: "m32.5 61 135 78", library: libraries[1] },
+  { d: "m167.5 61-135 78", library: libraries[2] },
+];
+---
+
+<svg class="hero-mark" viewBox="0 0 200 200" aria-hidden="true">
+  {
+    strokes.map(({ d, library }, index) => (
+      <path
+        d={d}
+        pathLength="1"
+        style={`--dark:${library?.accent.dark};--light:${library?.accent.light};--delay:${index * 140}ms`}
+      />
+    ))
+  }
+</svg>
+
+<style>
+  .hero-mark {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  path {
+    fill: none;
+    stroke: var(--dark);
+    stroke-width: 26;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    opacity: 0;
+    animation: draw 900ms cubic-bezier(0.65, 0, 0.35, 1) var(--delay) forwards;
+    mix-blend-mode: screen;
+  }
+
+  /* The light-theme accents are darkened for text contrast; the mark keeps the bright ones. */
+  :global([data-theme="light"]) path {
+    stroke: color-mix(in srgb, var(--dark) 88%, black);
+    mix-blend-mode: multiply;
+  }
+
+  /* Opacity hides the round cap that would otherwise show as a dot before each stroke starts. */
+  @keyframes draw {
+    from {
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    path {
+      stroke-dashoffset: 0;
+      opacity: 1;
+      animation: none;
+    }
+  }
+</style>

@@ -1,0 +1,16 @@
+node_modules
+dist
+.worktrees
+.vite
+.astro/
+.playwright-cli/
+*.tsbuildinfo
+*.tgz
+.DS_Store
+.env
+.env.*
+!.env.example
+.wrangler
+.dev-kit
+.repos
+.alchemy

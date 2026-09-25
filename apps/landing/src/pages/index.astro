@@ -1,0 +1,306 @@
+---
+import { Code } from "astro:components";
+
+import CopyCommand from "@yielded/starlight-theme/components/CopyCommand.astro";
+import tokyoNightLight from "@yielded/starlight-theme/code-themes/tokyo-night-light.json";
+import { libraries, type LibraryId } from "@yielded/starlight-theme/libraries";
+
+import HeroMark from "../components/HeroMark.astro";
+import Layout from "../layouts/Layout.astro";
+import agentSnippet from "../snippets/agent.ts.txt?raw";
+import authSnippet from "../snippets/auth.ts.txt?raw";
+import syncSnippet from "../snippets/sync.ts.txt?raw";
+
+const snippets: Record<LibraryId, { readonly file: string; readonly code: string }> = {
+  sync: { file: "counter.ts", code: syncSnippet },
+  auth: { file: "auth.ts", code: authSnippet },
+  agent: { file: "agent.ts", code: agentSnippet },
+};
+
+const themes = { dark: "tokyo-night", light: { ...tokyoNightLight, type: "light" } } as const;
+---
+
+<Layout title="yielded" description="Effect libraries for realtime sync, authentication, and agents.">
+  <section class="hero">
+    <div class="hero-copy">
+      <h1>Effect libraries for sync, auth, and agents.</h1>
+      <p class="lede">TypeScript packages built on Effect 4. MIT licensed, in public beta.</p>
+      <nav class="jump" aria-label="Libraries">
+        {
+          libraries.map((library) => (
+            <a href={`#${library.id}`} style={`--c-dark:${library.accent.dark};--c-light:${library.accent.light}`}>
+              <span class="dot" aria-hidden="true" />
+              {library.name}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+    <div class="hero-art">
+      <HeroMark />
+    </div>
+  </section>
+
+  {
+    libraries.map((library) => {
+      const snippet = snippets[library.id];
+      const isLive = library.status === "live";
+
+      return (
+        <section
+          id={library.id}
+          class="library"
+          style={`--c-dark:${library.accent.dark};--c-light:${library.accent.light}`}>
+          <div class="library-info">
+            <p class="library-name">
+              <span class="dot" aria-hidden="true" />
+              {library.name}
+              {!isLive && <span class="badge">Docs soon</span>}
+            </p>
+            <h2>{library.tagline}</h2>
+            <p class="description">{library.description}</p>
+            <CopyCommand command={library.install} />
+            <div class="links">
+              {isLive ? (
+                <a class="primary" href={`${library.base}/`}>
+                  Read the docs <span aria-hidden="true">→</span>
+                </a>
+              ) : (
+                <a class="primary" href={library.repository}>
+                  Read the README <span aria-hidden="true">→</span>
+                </a>
+              )}
+              {isLive && <a href={library.repository}>GitHub</a>}
+            </div>
+          </div>
+          <figure class="library-code">
+            <figcaption>{snippet.file}</figcaption>
+            <Code code={snippet.code.trimEnd()} lang="ts" themes={themes} defaultColor={false} />
+          </figure>
+        </section>
+      );
+    })
+  }
+</Layout>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 3rem;
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: clamp(4rem, 11vw, 8rem) clamp(1rem, 4vw, 2rem) clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .hero::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0 -50vw;
+    background-image:
+      linear-gradient(var(--yl-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--yl-grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: center top;
+    mask-image: linear-gradient(to bottom, black 55%, transparent);
+    content: "";
+  }
+
+  @media (min-width: 56rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    }
+  }
+
+  h1 {
+    max-width: 15ch;
+    margin: 0;
+    font-size: clamp(2.75rem, 7vw, 5.25rem);
+    font-weight: 650;
+    line-height: 0.98;
+    letter-spacing: -0.05em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 1.75rem 0 0;
+    color: var(--yl-text-muted);
+    font-size: clamp(1.0625rem, 2vw, 1.25rem);
+  }
+
+  .jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 2.25rem;
+  }
+
+  .jump a {
+    --c: var(--c-dark);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 1rem 0.5rem 0.85rem;
+    border: 1px solid var(--yl-border-strong);
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 550;
+    text-decoration: none;
+    transition: border-color 150ms ease;
+  }
+
+  .jump a:hover {
+    border-color: var(--c);
+  }
+
+  .hero-art {
+    width: min(100%, 22rem);
+    justify-self: center;
+  }
+
+  @media (max-width: 55.99rem) {
+    .hero-art {
+      display: none;
+    }
+  }
+
+  .dot {
+    flex: none;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 999px;
+    background: var(--c);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent);
+  }
+
+  .library {
+    --c: var(--c-dark);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: clamp(3rem, 7vw, 5rem) clamp(1rem, 4vw, 2rem);
+    border-top: 1px solid var(--yl-border);
+    scroll-margin-top: 4rem;
+  }
+
+  :global([data-theme="light"]) .library,
+  :global([data-theme="light"]) .jump a {
+    --c: var(--c-light);
+  }
+
+  @media (min-width: 56rem) {
+    .library {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: clamp(2.5rem, 5vw, 4.5rem);
+      align-items: start;
+    }
+  }
+
+  .library-name {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    font-family: var(--yl-font-mono);
+    font-size: 0.9375rem;
+  }
+
+  .badge {
+    padding: 0.05rem 0.5rem;
+    border: 1px solid var(--yl-border-strong);
+    border-radius: 999px;
+    color: var(--yl-text-muted);
+    font-size: 0.75rem;
+  }
+
+  h2 {
+    margin: 1.25rem 0 0;
+    font-size: clamp(1.875rem, 3.6vw, 2.625rem);
+    font-weight: 650;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
+  }
+
+  .description {
+    max-width: 34rem;
+    margin: 1.25rem 0 1.75rem;
+    color: var(--yl-text-muted);
+    text-wrap: pretty;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    font-weight: 600;
+  }
+
+  .links a {
+    color: var(--yl-text-muted);
+    text-decoration: none;
+  }
+
+  .links a:hover {
+    color: var(--yl-text);
+  }
+
+  .links a.primary {
+    color: var(--c);
+  }
+
+  .library-code {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--yl-border);
+    border-radius: 0.875rem;
+    background: var(--yl-code-bg);
+    box-shadow: 0 -1px 0 0 color-mix(in srgb, var(--c) 70%, transparent) inset;
+  }
+
+  .library-code figcaption {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.1rem;
+    border-bottom: 1px solid var(--yl-border);
+    color: var(--yl-text-muted);
+    font-family: var(--yl-font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .library-code figcaption::before {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--c);
+    content: "";
+  }
+
+  .library-code :global(pre) {
+    margin: 0;
+    padding: 1.1rem 1.25rem 1.25rem;
+    overflow-x: auto;
+    background: transparent !important;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .library-code :global(pre span) {
+    color: var(--shiki-dark);
+    font-style: var(--shiki-dark-font-style);
+  }
+
+  :global([data-theme="light"]) .library-code :global(pre span) {
+    color: var(--shiki-light);
+    font-style: var(--shiki-light-font-style);
+  }
+</style>

@@ -1,0 +1,31 @@
+---
+/**
+ * Renders code from another file, optionally a named region, as a Starlight code block.
+ *
+ * ```mdx
+ * <Snippet src="../README.md" region="auth-contract" />
+ * <Snippet src="snippets/agent.ts" region="define" title="agent.ts" />
+ * ```
+ *
+ * `src` resolves from the docs project root (`docs/`).
+ */
+import path from "node:path";
+
+import { Code } from "@astrojs/starlight/components";
+import { root } from "virtual:yielded/library";
+
+import { readSnippet } from "../markdown.ts";
+
+interface Props {
+  readonly src: string;
+  readonly region?: string;
+  /** Overrides the title from the source. Pass `false` to hide it, such as inside tabs. */
+  readonly title?: string | false;
+}
+
+const { src, region, title } = Astro.props;
+const snippet = readSnippet(path.resolve(root, src), region);
+const resolvedTitle = title === false ? undefined : (title ?? snippet.title);
+---
+
+<Code code={snippet.code} lang={snippet.lang} title={resolvedTitle} />

@@ -1,0 +1,21 @@
+import { Schema } from "effect";
+import { Action, Source } from "@yielded/sync";
+
+export const Counter = Source.make({
+  kind: "counter",
+  schemaVersion: 1,
+  snapshot: Schema.Struct({ value: Schema.Number }),
+  event: Schema.Struct({ value: Schema.Number }),
+  message: Schema.Never,
+  actions: [
+    Action.make("set", {
+      payload: Schema.Struct({ value: Schema.Number }),
+      success: Schema.Struct({
+        previous: Schema.Number,
+        current: Schema.Number,
+      }),
+      error: Schema.Never,
+    }),
+  ],
+  plugins: [],
+});

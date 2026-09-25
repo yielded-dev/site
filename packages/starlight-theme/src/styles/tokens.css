@@ -1,0 +1,41 @@
+/*
+ * yielded.dev design tokens, shared by the landing page and every Starlight docs site.
+ * Dark is the default; `data-theme="light"` on <html> switches palettes, matching Starlight.
+ */
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+
+:root {
+  --yl-font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --yl-font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --yl-bg: #121310;
+  --yl-bg-raised: #191a16;
+  --yl-bg-sunken: #0d0e0b;
+  --yl-text: #f3f1e8;
+  --yl-text-muted: #b3b5aa;
+  --yl-text-faint: #7d8076;
+  --yl-border: #2c2e28;
+  --yl-border-strong: #3d3f38;
+  --yl-grid: rgba(243, 241, 232, 0.045);
+  --yl-code-bg: #17181c;
+
+  /* Overridden per library; the landing page keeps the neutral brand accent. */
+  --yl-accent: #c6f36a;
+}
+
+:root[data-theme="light"] {
+  --yl-bg: #fbfbf9;
+  --yl-bg-raised: #ffffff;
+  --yl-bg-sunken: #f2f2ee;
+  --yl-text: #15161a;
+  --yl-text-muted: #4f535e;
+  --yl-text-faint: #80848f;
+  --yl-border: #e3e4e0;
+  --yl-border-strong: #cfd1cb;
+  --yl-grid: rgba(21, 22, 26, 0.05);
+  --yl-code-bg: #ffffff;
+
+  --yl-accent: #3f6b00;
+}

@@ -1,0 +1,55 @@
+---
+/** Page title with the sidebar group it belongs to as an eyebrow. */
+interface Entry {
+  readonly type: "link" | "group";
+  readonly label: string;
+  readonly isCurrent?: boolean;
+  readonly entries?: ReadonlyArray<Entry>;
+}
+
+const { entry, sidebar } = Astro.locals.starlightRoute;
+
+const findGroup = (entries: ReadonlyArray<Entry>, parent: string | undefined): string | undefined => {
+  for (const item of entries) {
+    if (item.type === "link" && item.isCurrent === true) return parent;
+
+    if (item.type === "group" && item.entries !== undefined) {
+      const found = findGroup(item.entries, item.label);
+
+      if (found !== undefined) return found;
+    }
+  }
+
+  return undefined;
+};
+
+const group = findGroup(sidebar as ReadonlyArray<Entry>, undefined);
+---
+
+{group !== undefined && <p class="yl-eyebrow">{group}</p>}
+<h1 id="_top">{entry.data.title}</h1>
+
+<style>
+  .yl-eyebrow {
+    margin: 1rem 0 0.6rem;
+    color: var(--sl-color-accent);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .yl-eyebrow + h1 {
+    margin-top: 0;
+  }
+
+  h1 {
+    margin-top: 1rem;
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-h1);
+    font-weight: 650;
+    line-height: 1.05;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+  }
+</style>

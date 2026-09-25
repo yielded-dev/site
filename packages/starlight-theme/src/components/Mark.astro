@@ -1,0 +1,23 @@
+---
+/** The yielded mark: `yield*`'s asterisk in a rounded square. */
+interface Props {
+  readonly size?: number;
+}
+
+const { size = 22 } = Astro.props;
+---
+
+<svg class="yl-mark" viewBox="0 0 32 32" width={size} height={size} aria-hidden="true">
+  <rect width="32" height="32" rx="8" fill="var(--yl-text)"></rect>
+  <g stroke="var(--yl-bg)" stroke-width="3.2" stroke-linecap="round">
+    <path d="M16 8.5v15"></path>
+    <path d="m9.5 12.25 13 7.5"></path>
+    <path d="m22.5 12.25-13 7.5"></path>
+  </g>
+</svg>
+
+<style>
+  .yl-mark {
+    flex: none;
+  }
+</style>

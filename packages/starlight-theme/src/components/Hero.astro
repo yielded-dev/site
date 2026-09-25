@@ -1,0 +1,96 @@
+---
+/**
+ * Splash-page hero: library eyebrow, title, tagline, actions, and a copyable install command.
+ * Pages with a hero image fall back to Starlight's default hero.
+ */
+import { LinkButton } from "@astrojs/starlight/components";
+import DefaultHero from "@astrojs/starlight/components/Hero.astro";
+import libraryId from "virtual:yielded/library";
+
+import { getLibrary } from "../libraries.ts";
+import CopyCommand from "./CopyCommand.astro";
+
+const library = getLibrary(libraryId);
+const { data } = Astro.locals.starlightRoute.entry;
+const { title = data.title, tagline, image, actions = [] } = data.hero ?? {};
+---
+
+{
+  image !== undefined ? (
+    <DefaultHero />
+  ) : (
+    <div class="yl-hero">
+      <p class="yl-hero-eyebrow">
+        <span class="yl-hero-dot" aria-hidden="true" />
+        Yielded {library.name}
+      </p>
+      <h1 id="_top" data-page-title set:html={title} />
+      {tagline !== undefined && <p class="yl-hero-tagline" set:html={tagline} />}
+      <div class="yl-hero-actions">
+        {actions.map(({ attrs: { class: className, ...attrs } = {}, icon, link: href, text, variant }) => (
+          <LinkButton {href} {variant} icon={icon?.name} class:list={[className]} {...attrs}>
+            {text}
+            {icon?.html !== undefined && <Fragment set:html={icon.html} />}
+          </LinkButton>
+        ))}
+        <CopyCommand command={library.install} />
+      </div>
+    </div>
+  )
+}
+
+<style>
+  .yl-hero {
+    padding-block: clamp(2.5rem, 9vw, 6.5rem) clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .yl-hero-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1.5rem;
+    color: var(--sl-color-gray-3);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-sm);
+  }
+
+  .yl-hero-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: var(--yl-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--yl-accent) 22%, transparent);
+  }
+
+  h1 {
+    max-width: 18ch;
+    margin: 0;
+    color: var(--sl-color-white);
+    font-size: clamp(2.5rem, 6.5vw, 4.5rem);
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    text-wrap: balance;
+  }
+
+  .yl-hero-tagline {
+    max-width: 40rem;
+    margin: 1.5rem 0 0;
+    color: var(--sl-color-gray-3);
+    font-size: clamp(1.0625rem, 2vw, 1.25rem);
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  .yl-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 2.25rem;
+  }
+
+  .yl-hero-actions :global(.sl-link-button) {
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,62 @@
+---
+/** Starlight's page footer followed by a slim yielded.dev footer. */
+import DefaultFooter from "@astrojs/starlight/components/Footer.astro";
+
+import { libraries } from "../libraries.ts";
+import Mark from "./Mark.astro";
+---
+
+<DefaultFooter />
+
+<div class="yl-footer">
+  <a class="yl-footer-home" href="/">
+    <Mark size={18} />
+    <span>yielded</span>
+  </a>
+  <nav aria-label="Libraries">
+    {
+      libraries
+        .filter((library) => library.status === "live")
+        .map((library) => <a href={`${library.base}/`}>{library.name}</a>)
+    }
+    <a href="https://github.com/yielded-dev">GitHub</a>
+  </nav>
+</div>
+
+<style>
+  .yl-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--yl-border);
+    font-size: var(--sl-text-sm);
+  }
+
+  .yl-footer-home {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--sl-color-white);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+  }
+
+  nav {
+    display: flex;
+    gap: 1.25rem;
+  }
+
+  nav a {
+    color: var(--sl-color-gray-3);
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: var(--sl-color-white);
+  }
+</style>

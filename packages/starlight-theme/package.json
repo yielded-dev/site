@@ -1,0 +1,54 @@
+{
+  "name": "@yielded/starlight-theme",
+  "version": "0.1.0",
+  "description": "Shared Starlight theme, library switcher, and Markdown helpers for yielded.dev docs.",
+  "keywords": [
+    "astro",
+    "starlight",
+    "starlight-plugin",
+    "withastro"
+  ],
+  "homepage": "https://github.com/yielded-dev/site/tree/main/packages/starlight-theme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yielded-dev/site.git",
+    "directory": "packages/starlight-theme"
+  },
+  "files": [
+    "src",
+    "assets"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./libraries": "./src/libraries.ts",
+    "./tokens.css": "./src/styles/tokens.css",
+    "./components/*": "./src/components/*",
+    "./favicon.svg": "./assets/favicon.svg",
+    "./components": "./src/components.ts",
+    "./code-themes/*": "./src/code-themes/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "github-slugger": "^2.0.0",
+    "mdast-util-from-markdown": "^2.0.3",
+    "mdast-util-gfm": "^3.1.0",
+    "micromark-extension-gfm": "^3.0.0"
+  },
+  "devDependencies": {
+    "@astrojs/starlight": "0.42.4",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "26.1.2",
+    "astro": "7.3.5",
+    "typescript": "7.0.2"
+  },
+  "peerDependencies": {
+    "@astrojs/starlight": ">=0.42.0",
+    "astro": ">=7.2.10"
+  }
+}

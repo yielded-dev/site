@@ -1,0 +1,16 @@
+import { Effect, Schema } from "effect";
+import { Agent, AgentRuntime } from "effect-agent";
+import { Toolkit } from "effect/unstable/ai";
+
+const planner = Agent.make("travel-planner", {
+  input: Schema.Struct({ city: Schema.String, days: Schema.Int }),
+  output: Schema.Struct({ itinerary: Schema.Array(Schema.String) }),
+  instructions: ({ city, days }) => `Plan ${days} days in ${city}. Suggest one activity per day.`,
+  toolkit: Toolkit.empty,
+  policy: { maxTurns: 6, maxToolCalls: 10, maxDuration: "2 minutes" },
+});
+
+const program = Effect.gen(function* () {
+  const result = yield* AgentRuntime.run(planner, { city: "Lisbon", days: 2 });
+  yield* Effect.log(result.output.itinerary); // readonly string[]
+});
