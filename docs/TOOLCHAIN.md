@@ -50,6 +50,11 @@ GitHub App (`RELEASE_APP_ID`, `RELEASE_APP_PRIVATE_KEY`) so version pull request
 trigger CI. It fetches those two values from Infisical during the run using GitHub
 OIDC, then clears them from the environment after minting the app token.
 
+The workflow pins npm 11.20.0, which supports trusted publishing and returns the
+package metadata shape expected by Changesets 2.31.0. npm 12 wraps `npm info --json`
+results in an array, causing this Changesets version to miss existing releases
+and attempt to publish them again.
+
 ### Release credentials in Infisical
 
 The source is the `site` project (`e95eeea5-854c-415c-8311-967b01f6c3ff`) in the
