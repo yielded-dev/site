@@ -63,5 +63,6 @@ The auth stack owns the proxied apex DNS placeholder record the routes rely on.
 
 Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, then run
 `vp run plan --stage prod` to review changes or `vp run deploy --stage prod --yes`
-to deploy. The `Deploy` workflow runs on relevant changes to `main` with the same
-repository secrets.
+to deploy. The `Deploy` workflow runs on relevant changes to `main` when the
+repository variable `DEPLOY_ENABLED` is `true`, using the same values as repository
+secrets.

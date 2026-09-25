@@ -27,6 +27,7 @@ env:
 
 jobs:
   deploy:
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
     name: Deploy landing page
     runs-on: ubuntu-latest
     timeout-minutes: 15
