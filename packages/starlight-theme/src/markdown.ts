@@ -34,7 +34,7 @@ interface MdastPlugin {
   readonly name: string;
   readonly text?: Visitor<ValueNode>;
   readonly inlineCode?: Visitor<ValueNode>;
-  readonly code?: Visitor<ValueNode>;
+  readonly code?: Visitor<Code>;
   readonly html?: Visitor<ValueNode>;
   readonly link?: Visitor<UrlNode>;
   readonly definition?: Visitor<UrlNode>;
@@ -147,6 +147,26 @@ export const replacementsPlugin = (replacements: Replacements): MdastPluginFacto
           definition: visitUrl,
         };
 };
+
+/** Keep Mermaid fences out of the code highlighter, with readable source before rendering. */
+export const mermaidPlugin: MdastPluginFactory = () => ({
+  name: "yielded-mermaid",
+  code: (node, context) => {
+    if (node.lang !== "mermaid") return;
+
+    const source = node.value
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+
+    context.replaceNode(node, [
+      {
+        type: "html",
+        value: `<div class="yl-mermaid" tabindex="0" role="region" aria-label="Diagram"><pre><code>${source}</code></pre></div>`,
+      },
+    ]);
+  },
+});
 
 export interface IncludesOptions {
   /** Directory that `@/` include paths resolve from: the Astro project root, `docs/`. */

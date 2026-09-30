@@ -8,6 +8,7 @@ import { getLibrary, type LibraryId } from "./libraries.ts";
 import {
   docLinksPlugin,
   includesPlugin,
+  mermaidPlugin,
   replacementsPlugin,
   type MdastPluginFactory,
   type Replacements,
@@ -43,6 +44,7 @@ export default function yieldedTheme(options: YieldedThemeOptions): StarlightPlu
           customCss: [
             resolve("./styles/tokens.css"),
             resolve("./styles/theme.css"),
+            resolve("./styles/mermaid.css"),
             ...(config.customCss ?? []),
           ],
           components: {
@@ -109,7 +111,7 @@ export default function yieldedTheme(options: YieldedThemeOptions): StarlightPlu
 const markdownIntegration = (options: YieldedThemeOptions): AstroIntegration => ({
   name: "@yielded/starlight-theme/markdown",
   hooks: {
-    "astro:config:setup"({ config, updateConfig, logger }) {
+    "astro:config:setup"({ config, updateConfig, injectScript, logger }) {
       const base = config.base.replace(/\/$/, "");
       const docsDir = fileURLToPath(new URL("content/docs/", config.srcDir));
 
@@ -119,6 +121,8 @@ const markdownIntegration = (options: YieldedThemeOptions): AstroIntegration => 
 
       const mdastPlugins = processor.options?.mdastPlugins;
 
+      injectScript("page", `import ${JSON.stringify(resolve("./mermaid.ts"))};`);
+
       // Includes run first so included content gets replacements, and replacements run before
       // links are rewritten so tokens inside URLs resolve.
       if (Array.isArray(mdastPlugins)) {
@@ -126,6 +130,7 @@ const markdownIntegration = (options: YieldedThemeOptions): AstroIntegration => 
           includesPlugin({ root: fileURLToPath(config.root) }),
           replacementsPlugin(options.replacements ?? {}),
           docLinksPlugin({ base, docsDir }),
+          mermaidPlugin,
         );
       } else {
         logger.warn(

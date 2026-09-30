@@ -38,8 +38,25 @@ These run on Astro's default Markdown processor (Sätteri):
   `<!-- #region name -->` … `<!-- #endregion name -->` block from another file. Paths resolve
   against the including file, or against the docs project root with `@/`. VitePress-style
   code titles (`ts [file.ts]`) in included content become `title="file.ts"`.
+- **Mermaid diagrams.** Fenced `mermaid` blocks in Markdown and MDX render as SVG
+  diagrams using the site's fonts, accent, and light/dark theme. Wide diagrams
+  scroll within the page. Mermaid loads only on pages containing diagrams;
+  the source stays readable when JavaScript is unavailable.
 
-MDX has no HTML comments, so MDX pages use the `Snippet` component instead:
+````md
+```mermaid
+flowchart LR
+  accTitle: A client sends an action to the server
+  accDescr: The server commits state and a receipt before returning the result.
+  Client -->|Action| Server
+  Server -->|Commit| Storage[(State and receipts)]
+  Server -->|Result| Client
+```
+````
+
+Use `accTitle` and `accDescr` to give diagrams accessible names and descriptions.
+
+For includes in MDX, use the `Snippet` component because MDX has no HTML comments:
 
 ```mdx
 import { Snippet } from "@yielded/starlight-theme/components";

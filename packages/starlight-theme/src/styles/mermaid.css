@@ -1,0 +1,29 @@
+.sl-markdown-content .yl-mermaid {
+  margin-block: 1.5rem;
+  padding: 1.25rem;
+  overflow: auto;
+  border: 1px solid var(--yl-border);
+  border-radius: 0.5rem;
+  background: var(--yl-bg-raised);
+  color: var(--yl-text);
+  line-height: normal;
+}
+
+.sl-markdown-content .yl-mermaid:focus-visible {
+  outline: 2px solid var(--yl-accent);
+  outline-offset: 2px;
+}
+
+.sl-markdown-content .yl-mermaid pre {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.sl-markdown-content .yl-mermaid svg {
+  display: block;
+  max-width: none;
+  height: auto;
+  margin-inline: auto;
+}

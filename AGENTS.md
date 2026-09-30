@@ -33,6 +33,9 @@ and explicit compiler setup.
   local path while developing a docs site.
 - `libraries.ts` is the single source for library names, paths, accents, taglines,
   and install commands. The header switcher, docs footer, and landing page read it.
+- Use `bun add` for Auth and Sync consumer installation examples.
+- Use fenced `mermaid` blocks for documentation flow diagrams. The theme owns
+  rendering and colors; give diagrams an `accTitle` and `accDescr`.
 - The landing page lives in `apps/landing` and deploys through `alchemy.run.ts` to
   `yielded.dev/*`. Library docs deploy from their own repositories on more specific
   `yielded.dev/<library>*` routes.
