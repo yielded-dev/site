@@ -39,7 +39,7 @@ These run on Astro's default Markdown processor (Sätteri):
   against the including file, or against the docs project root with `@/`. VitePress-style
   code titles (`ts [file.ts]`) in included content become `title="file.ts"`.
 - **Mermaid diagrams.** Fenced `mermaid` blocks in Markdown and MDX render as SVG
-  diagrams using the site's fonts, accent, and light/dark theme. Wide diagrams
+  diagrams using the site's fonts and light/dark palette. Wide diagrams
   scroll within the page. Mermaid loads only on pages containing diagrams;
   the source stays readable when JavaScript is unavailable.
 
@@ -55,6 +55,9 @@ flowchart LR
 ````
 
 Use `accTitle` and `accDescr` to give diagrams accessible names and descriptions.
+The shared renderer in `src/mermaid.ts` controls typography, spacing, and colors;
+`src/styles/mermaid.css` controls surfaces, shapes, and label masking. Keep each
+diagram's layout and relationships in its Markdown definition.
 
 For includes in MDX, use the `Snippet` component because MDX has no HTML comments:
 

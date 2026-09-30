@@ -1,6 +1,6 @@
 .sl-markdown-content .yl-mermaid {
   margin-block: 1.5rem;
-  padding: 1.25rem;
+  padding: 1.5rem 1rem;
   overflow: auto;
   border: 1px solid var(--yl-border);
   border-radius: 0.5rem;
@@ -26,4 +26,29 @@
   max-width: none;
   height: auto;
   margin-inline: auto;
+}
+
+.sl-markdown-content .yl-mermaid .actor-line {
+  stroke-width: 1px !important;
+  stroke-dasharray: 3 5;
+}
+
+.sl-markdown-content .yl-mermaid rect.actor,
+.sl-markdown-content .yl-mermaid .node rect {
+  rx: 6px;
+  ry: 6px;
+}
+
+/* Mermaid's embedded rules use an SVG ID; labels must still mask lines behind them. */
+.sl-markdown-content .yl-mermaid .messageText,
+.sl-markdown-content .yl-mermaid .edgeLabel text {
+  paint-order: stroke;
+  stroke: var(--yl-bg-raised) !important;
+  stroke-width: 6px !important;
+  stroke-linejoin: round;
+}
+
+.sl-markdown-content .yl-mermaid .edgeLabel .labelBkg {
+  fill: var(--yl-bg-raised) !important;
+  opacity: 1 !important;
 }
