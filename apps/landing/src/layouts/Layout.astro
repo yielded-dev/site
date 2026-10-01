@@ -2,6 +2,7 @@
 import "@yielded/starlight-theme/tokens.css";
 
 import Mark from "@yielded/starlight-theme/components/Mark.astro";
+import { libraries } from "@yielded/starlight-theme/libraries";
 
 interface Props {
   readonly title: string;
@@ -37,8 +38,11 @@ const { title, description } = Astro.props;
         <span>yielded</span>
       </a>
       <nav aria-label="Primary">
-        <a href="/sync/">Sync</a>
-        <a href="/auth/">Auth</a>
+        {
+          libraries
+            .filter((library) => library.status === "live")
+            .map((library) => <a href={`${library.base}/`}>{library.name}</a>)
+        }
         <a class="icon-link" href="https://github.com/yielded-dev" aria-label="yielded on GitHub">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <path

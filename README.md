@@ -25,7 +25,7 @@ wins over the landing page's `yielded.dev/*`.
 ## Adding a library
 
 1. Add it to `packages/starlight-theme/src/libraries.ts` (name, path, accent, install command).
-   Mark it `status: "soon"` until its docs are live.
+   Mark it `status: "soon"` until the library is ready to promote.
 2. In the library's repository, add a `docs/` Starlight workspace using
    `yieldedTheme({ library: "<id>" })` and a Worker route for `yielded.dev/<id>*`.
 3. Publish the theme and redeploy the landing page and the other docs sites so their switchers
