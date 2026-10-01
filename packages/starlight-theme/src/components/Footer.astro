@@ -2,14 +2,14 @@
 /** Starlight's page footer followed by a slim yielded.dev footer. */
 import DefaultFooter from "@astrojs/starlight/components/Footer.astro";
 
-import { libraries } from "../libraries.ts";
+import { libraries, origin } from "../libraries.ts";
 import Mark from "./Mark.astro";
 ---
 
 <DefaultFooter />
 
 <div class="yl-footer">
-  <a class="yl-footer-home" href="/">
+  <a class="yl-footer-home" href={origin}>
     <Mark size={18} />
     <span>yielded</span>
   </a>
@@ -17,7 +17,7 @@ import Mark from "./Mark.astro";
     {
       libraries
         .filter((library) => library.status === "live")
-        .map((library) => <a href={library.docsUrl ?? `${library.base}/`}>{library.name}</a>)
+        .map((library) => <a href={library.docsUrl ?? `${origin}${library.base}/`}>{library.name}</a>)
     }
     <a href="https://github.com/yielded-dev">GitHub</a>
   </nav>
