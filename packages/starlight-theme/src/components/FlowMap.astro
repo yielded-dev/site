@@ -71,11 +71,11 @@ const titleOf = (id: string) => {
   return node.title;
 };
 
-const titlesIn = (inside: (cell: Cell) => boolean) =>
-  nodes
-    .filter(({ at }) => inside(at))
-    .map((node) => node.title)
-    .join(", ");
+const titlesIn = (inside: (cell: Cell) => boolean) => {
+  const members = nodes.filter(({ at }) => inside(at));
+
+  return { count: members.length, titles: members.map((node) => node.title).join(", ") };
+};
 
 // Zones without nodes are omitted; a group keeps its label even when it outlines none.
 const zones =
@@ -88,9 +88,9 @@ const zones =
           [boundary.below, ([row]: Cell) => row > boundary.row],
         ] as const
       ).flatMap(([label, inside]) => {
-        const titles = titlesIn(inside);
+        const { count, titles } = titlesIn(inside);
 
-        return titles === "" ? [] : [`${label}: ${titles}`];
+        return count === 0 ? [] : [`${label}: ${titles}`];
       });
 
 const connections = [
@@ -100,7 +100,7 @@ const connections = [
   ),
   ...zones,
   ...groups.map(({ label, from, to }) => {
-    const titles = titlesIn(
+    const { titles } = titlesIn(
       ([row, column]) => row >= from[0] && row <= to[0] && column >= from[1] && column <= to[1],
     );
 
