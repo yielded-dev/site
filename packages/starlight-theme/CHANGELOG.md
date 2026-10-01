@@ -1,5 +1,11 @@
 # @yielded/starlight-theme
 
+## 0.1.3
+
+### Patch Changes
+
+- [#9](https://github.com/yielded-dev/site/pull/9) [`a1bd630`](https://github.com/yielded-dev/site/commit/a1bd630a7b99a755d24c488bc1657412134a6edc) Thanks [@danieljvdm](https://github.com/danieljvdm)! - Resolve shared library navigation and the Yielded home link to their canonical domains when documentation is hosted outside yielded.dev.
+
 ## 0.1.2
 
 ### Patch Changes
