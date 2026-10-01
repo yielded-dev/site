@@ -199,7 +199,7 @@ starlight-toc a[aria-current="true"] {
 
 /* Cards on splash pages read as columns under a rule rather than boxes. */
 :root[data-has-hero] .card-grid {
-  gap: 0 2.5rem;
+  gap: 1rem 2.5rem;
 }
 
 @media (min-width: 72rem) {
