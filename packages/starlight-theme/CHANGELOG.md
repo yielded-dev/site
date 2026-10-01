@@ -1,5 +1,11 @@
 # @yielded/starlight-theme
 
+## 0.1.4
+
+### Patch Changes
+
+- [#10](https://github.com/yielded-dev/site/pull/10) [`c8696cd`](https://github.com/yielded-dev/site/commit/c8696cd3d136c30bb689f88525fed3ce05bb6ebe) Thanks [@danieljvdm](https://github.com/danieljvdm)! - Add vertical spacing between splash-page card rows and align hero buttons and install commands to a common minimum height.
+
 ## 0.1.3
 
 ### Patch Changes
