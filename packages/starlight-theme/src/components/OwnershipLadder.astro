@@ -40,14 +40,18 @@ const ownerLabel = { library: libraryOwner, app: "You" } as const;
 
 const hasLinks = levels.some(({ links = [] }) => links.length > 0);
 
-// The boundary rule runs along each library cell's edge that faces one of yours.
+// The boundary rule runs along each cell edge where ownership changes.
 const edges = (row: number, column: number) => {
-  if (layers[row]?.cells[column]?.owner !== "library") return undefined;
-
+  const own = layers[row]?.cells[column]?.owner;
   const above = layers[row - 1]?.cells[column]?.owner;
   const right = layers[row]?.cells[column + 1]?.owner;
 
-  return [above === "app" ? "top" : "", right === "app" ? "right" : ""].join(" ").trim() || undefined;
+  const sides = [
+    above !== undefined && above !== own ? "top" : "",
+    right !== undefined && right !== own ? "right" : "",
+  ];
+
+  return sides.join(" ").trim() || undefined;
 };
 
 // Narrow columns break an API name after a dot, never inside an identifier.
@@ -163,7 +167,11 @@ const segments = (api: string) => api.split(/(?<=\.)/);
     {
       shared !== undefined && (
         <li class="same">
-          {inline(shared.note).map((part) => ("code" in part ? <code>{part.code}</code> : part.text))}
+          <p class="level">{shared.name}</p>
+          <p>
+            <span class="owner">{shared.label}</span>
+            {inline(shared.note).map((part) => ("code" in part ? <code>{part.code}</code> : part.text))}
+          </p>
         </li>
       )
     }
@@ -413,6 +421,15 @@ const segments = (api: string) => api.split(/(?<=\.)/);
   .stacked .same {
     color: var(--sl-color-gray-3);
     font-size: var(--sl-text-sm);
+  }
+
+  .stacked .same p + p {
+    margin-top: 0.35rem;
+  }
+
+  .stacked .same .owner {
+    display: inline;
+    margin-right: 0.4rem;
   }
 
   @container (max-width: 40rem) {

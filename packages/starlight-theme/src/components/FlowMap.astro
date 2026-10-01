@@ -71,19 +71,33 @@ const titleOf = (id: string) => {
   return node.title;
 };
 
+const listed = (label: string, inside: (cell: Cell) => boolean) => {
+  const titles = nodes.filter(({ at }) => inside(at)).map((node) => node.title);
+
+  return titles.length === 0 ? [] : [`${label}: ${titles.join(", ")}`];
+};
+
+const zones =
+  boundary === undefined
+    ? []
+    : [
+        ...listed(boundary.above, ([row]) => row < boundary.row),
+        ...listed(`Between ${boundary.above} and ${boundary.below}`, ([row]) => row === boundary.row),
+        ...listed(boundary.below, ([row]) => row > boundary.row),
+      ];
+
 const connections = [
   ...edges.map(
     ({ from, to, label }) =>
       `${titleOf(from)} to ${titleOf(to)}${label === undefined ? "" : `: ${label}`}`,
   ),
-  ...groups.map(({ label, from, to }) => {
-    const inside = nodes.filter(
-      ({ at: [row, column] }) =>
-        row >= from[0] && row <= to[0] && column >= from[1] && column <= to[1],
-    );
-
-    return `${label}: ${inside.map((node) => node.title).join(", ")}`;
-  }),
+  ...zones,
+  ...groups.flatMap(({ label, from, to }) =>
+    listed(
+      label,
+      ([row, column]) => row >= from[0] && row <= to[0] && column >= from[1] && column <= to[1],
+    ),
+  ),
 ];
 
 const owners = (["library", "app", "external"] as const).filter((owner) =>
@@ -325,7 +339,8 @@ const segments = (code: string) => code.split(/(?<=[.(])/);
     x > box.left && x < box.right && y > box.top && y < box.bottom;
 
   // A label masks the middle of a vertical segment or rides just above a horizontal one. It
-  // goes on the longest segment that holds it without covering a node.
+  // goes on the longest segment that holds it, or else any spot clear of nodes. A label with
+  // no clear spot stays hidden; the accessible summary still lists it.
   const spot = (
     points: ReadonlyArray<Point>,
     label: HTMLElement,
@@ -344,13 +359,13 @@ const segments = (code: string) => code.split(/(?<=[.(])/);
         const top = horizontal ? y - height - 3 : y - height / 2;
         const box = { left: x - width / 2, right: x + width / 2, top, bottom: top + height };
         const room = horizontal ? width : height + head * 2;
-        const fits = room <= length && !nodes.some((other) => overlaps(box, other));
+        const clear = !nodes.some((other) => overlaps(box, other));
 
-        return { x, y, horizontal, length, fits };
+        return { x, y, horizontal, length, clear, fits: clear && room <= length };
       })
       .sort((a, b) => b.length - a.length);
 
-    const best = spots.find(({ fits }) => fits) ?? spots[0];
+    const best = spots.find(({ fits }) => fits) ?? spots.find(({ clear }) => clear);
 
     return best === undefined
       ? undefined
@@ -433,6 +448,8 @@ const segments = (code: string) => code.split(/(?<=[.(])/);
         if (wire.label === undefined) continue;
 
         const place = spot(points, wire.label, [...boxes.values()], groupBoxes);
+
+        wire.label.toggleAttribute("data-unplaced", place === undefined);
 
         if (place === undefined) continue;
 
@@ -671,7 +688,7 @@ const segments = (code: string) => code.split(/(?<=[.(])/);
     translate: -50% calc(-100% - 0.15rem);
   }
 
-  .flow[data-drawn] .label {
+  .flow[data-drawn] .label:not([data-unplaced]) {
     visibility: visible;
   }
 

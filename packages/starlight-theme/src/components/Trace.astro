@@ -414,11 +414,17 @@ const lifelines = [
     margin: 0;
   }
 
+  /* Each step names its lane for screen readers, and on screen once the lanes collapse. */
   .where {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
     color: var(--sl-color-gray-3);
     font-size: var(--sl-text-xs);
     font-weight: 600;
+    white-space: nowrap;
   }
 
   .title {
@@ -474,8 +480,13 @@ const lifelines = [
     }
 
     .where {
-      display: block;
+      position: static;
+      width: auto;
+      height: auto;
+      overflow: visible;
+      clip-path: none;
       line-height: calc(var(--stop-y) * 2);
+      white-space: normal;
     }
 
     .title {

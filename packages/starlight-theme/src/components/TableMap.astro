@@ -25,6 +25,8 @@ interface Props {
 }
 
 const { table, columns, link, managed, more } = Astro.props;
+
+const key = columns[0]?.name;
 ---
 
 <figure class="table-map not-content">
@@ -47,6 +49,13 @@ const { table, columns, link, managed, more } = Astro.props;
   </div>
   <div class="managed">
     <p class="owner">Managed by {libraryOwner}</p>
+    {
+      key !== undefined && (
+        <p class="via">
+          Each references <code>{table}.{key}</code> as <code>{link}</code>.
+        </p>
+      )
+    }
     <ul>
       {
         managed.map((name) => (
@@ -169,6 +178,25 @@ const { table, columns, link, managed, more } = Astro.props;
     font-size: var(--sl-text-xs);
   }
 
+  /* Wide layouts draw the reference; the sentence stays for screen readers. */
+  .via {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .table-map .via code {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--sl-color-white);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-xs);
+  }
+
   .managed ul {
     padding-left: 1.25rem;
   }
@@ -237,6 +265,18 @@ const { table, columns, link, managed, more } = Astro.props;
     .table li[data-link]::after,
     .link-label {
       display: none;
+    }
+
+    .via {
+      position: static;
+      width: auto;
+      height: auto;
+      margin: -0.25rem 0 0.75rem;
+      overflow: visible;
+      clip-path: none;
+      color: var(--sl-color-gray-3);
+      font-size: var(--sl-text-sm);
+      white-space: normal;
     }
   }
 </style>
