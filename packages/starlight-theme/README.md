@@ -1,7 +1,7 @@
 # @yielded/starlight-theme
 
 The shared Starlight theme for yielded.dev docs: design tokens, a TanStack-style library
-switcher in the header, Tokyo Night code blocks, and Markdown helpers.
+switcher in the header, Tokyo Night code blocks, link preview images, and Markdown helpers.
 
 ```ts
 // docs/astro.config.ts
@@ -24,6 +24,25 @@ export default defineConfig({
 
 The plugin sets the library's accent color, the GitHub social link, and an edit link to
 `<repository>/edit/main/docs/` unless you configure them yourself.
+
+## Link previews
+
+`astro build` renders a 1200×630 card for every page at `og/<page>.png` and an
+`apple-touch-icon.png` for the site. A card shows the library, the page's sidebar group, and
+the page's `title` and `description` frontmatter, so those fields are what a shared link
+says. A page that sets `og:image` in its frontmatter `head` keeps its own image.
+
+Cards need `site` in the Astro config. They render from the built HTML, so the dev server
+links to images it does not serve.
+
+Sites outside Starlight can use the same renderer. Add the integration, then give each page
+`og:title`, `og:description`, and an `og:image` of `<site>/og/<page>.png`:
+
+```ts
+import linkPreviews from "@yielded/starlight-theme/link-previews";
+
+export default defineConfig({ site: "https://yielded.dev", integrations: [linkPreviews()] });
+```
 
 ## Markdown helpers
 

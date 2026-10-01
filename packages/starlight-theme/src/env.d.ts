@@ -1,3 +1,6 @@
+/// <reference types="@astrojs/starlight" />
+// Starlight's entry types declare `Astro.locals.starlightRoute` for route middleware.
+
 declare module "virtual:yielded/library" {
   // Mirrors `LibraryId` in libraries.ts; ambient modules cannot import relative files.
   const library: "sync" | "auth" | "agent";

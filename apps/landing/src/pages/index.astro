@@ -18,13 +18,19 @@ const snippets: Record<LibraryId, { readonly file: string; readonly code: string
 };
 
 const themes = { dark: "tokyo-night", light: { ...tokyoNightLight, type: "light" } } as const;
+
+const heading = "Effect libraries for sync, auth, and agents.";
+const lede = "TypeScript packages built on Effect. MIT licensed.";
 ---
 
-<Layout title="yielded" description="Effect libraries for realtime sync, authentication, and agents.">
+<Layout
+  title="yielded"
+  description="Effect libraries for realtime sync, authentication, and agents."
+  preview={{ title: heading, description: lede }}>
   <section class="hero">
     <div class="hero-copy">
-      <h1>Effect libraries for sync, auth, and agents.</h1>
-      <p class="lede">TypeScript packages built on Effect. MIT licensed.</p>
+      <h1>{heading}</h1>
+      <p class="lede">{lede}</p>
       <nav class="jump" aria-label="Libraries">
         {
           libraries.map((library) => (

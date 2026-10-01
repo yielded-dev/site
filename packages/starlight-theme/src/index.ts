@@ -5,6 +5,7 @@ import type { AstroIntegration } from "astro";
 
 import tokyoNightLight from "./code-themes/tokyo-night-light.json" with { type: "json" };
 import { getLibrary, type LibraryId } from "./libraries.ts";
+import linkPreviews from "./link-previews.ts";
 import {
   docLinksPlugin,
   includesPlugin,
@@ -39,7 +40,7 @@ export default function yieldedTheme(options: YieldedThemeOptions): StarlightPlu
   return {
     name: "@yielded/starlight-theme",
     hooks: {
-      "config:setup"({ config, updateConfig, addIntegration }) {
+      "config:setup"({ astroConfig, config, updateConfig, addIntegration, addRouteMiddleware }) {
         updateConfig({
           customCss: [
             resolve("./styles/tokens.css"),
@@ -94,6 +95,13 @@ export default function yieldedTheme(options: YieldedThemeOptions): StarlightPlu
           head: [
             ...(config.head ?? []),
             {
+              tag: "link",
+              attrs: {
+                rel: "apple-touch-icon",
+                href: `${astroConfig.base.replace(/\/$/, "")}/apple-touch-icon.png`,
+              },
+            },
+            {
               // `html:root` outranks the defaults in tokens.css regardless of stylesheet order.
               tag: "style",
               attrs: {},
@@ -102,7 +110,9 @@ export default function yieldedTheme(options: YieldedThemeOptions): StarlightPlu
           ],
         });
 
+        addRouteMiddleware({ entrypoint: resolve("./route-middleware.ts") });
         addIntegration(markdownIntegration(options));
+        addIntegration(linkPreviews({ library: options.library }));
       },
     },
   };
