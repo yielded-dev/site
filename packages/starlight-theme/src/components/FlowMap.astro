@@ -71,20 +71,27 @@ const titleOf = (id: string) => {
   return node.title;
 };
 
-const listed = (label: string, inside: (cell: Cell) => boolean) => {
-  const titles = nodes.filter(({ at }) => inside(at)).map((node) => node.title);
+const titlesIn = (inside: (cell: Cell) => boolean) =>
+  nodes
+    .filter(({ at }) => inside(at))
+    .map((node) => node.title)
+    .join(", ");
 
-  return titles.length === 0 ? [] : [`${label}: ${titles.join(", ")}`];
-};
-
+// Zones without nodes are omitted; a group keeps its label even when it outlines none.
 const zones =
   boundary === undefined
     ? []
-    : [
-        ...listed(boundary.above, ([row]) => row < boundary.row),
-        ...listed(`Between ${boundary.above} and ${boundary.below}`, ([row]) => row === boundary.row),
-        ...listed(boundary.below, ([row]) => row > boundary.row),
-      ];
+    : (
+        [
+          [boundary.above, ([row]: Cell) => row < boundary.row],
+          [`Between ${boundary.above} and ${boundary.below}`, ([row]: Cell) => row === boundary.row],
+          [boundary.below, ([row]: Cell) => row > boundary.row],
+        ] as const
+      ).flatMap(([label, inside]) => {
+        const titles = titlesIn(inside);
+
+        return titles === "" ? [] : [`${label}: ${titles}`];
+      });
 
 const connections = [
   ...edges.map(
@@ -92,12 +99,13 @@ const connections = [
       `${titleOf(from)} to ${titleOf(to)}${label === undefined ? "" : `: ${label}`}`,
   ),
   ...zones,
-  ...groups.flatMap(({ label, from, to }) =>
-    listed(
-      label,
+  ...groups.map(({ label, from, to }) => {
+    const titles = titlesIn(
       ([row, column]) => row >= from[0] && row <= to[0] && column >= from[1] && column <= to[1],
-    ),
-  ),
+    );
+
+    return `${label}: ${titles}`;
+  }),
 ];
 
 const owners = (["library", "app", "external"] as const).filter((owner) =>
