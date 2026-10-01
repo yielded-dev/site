@@ -1,5 +1,13 @@
 # @yielded/starlight-theme
 
+## 0.2.0
+
+### Minor Changes
+
+- [#14](https://github.com/yielded-dev/site/pull/14) [`ab2be16`](https://github.com/yielded-dev/site/commit/ab2be1654e68afe79f490dc82cde44e9f3703325) Thanks [@danieljvdm](https://github.com/danieljvdm)! - Add `FlowMap`, `Trace`, `CallSites`, `OwnershipLadder`, and `TableMap` diagram components to `@yielded/starlight-theme/components`. They mark what the configured library runs with its accent color.
+
+- [#13](https://github.com/yielded-dev/site/pull/13) [`692a6c6`](https://github.com/yielded-dev/site/commit/692a6c6e904ac716087acf90f58a16bec7d44852) Thanks [@danieljvdm](https://github.com/danieljvdm)! - Render an Open Graph card for every docs page and an Apple touch icon at build time. Cards show the library, sidebar group, page title, and description; they require `site` in the Astro config.
+
 ## 0.1.4
 
 ### Patch Changes
