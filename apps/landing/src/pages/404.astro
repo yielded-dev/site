@@ -15,7 +15,7 @@ import Layout from "../layouts/Layout.astro";
           .filter((library) => library.status === "live")
           .map((library) => (
             <li>
-              <a href={`${library.base}/`}>{library.name}</a>
+              <a href={library.docsUrl ?? `${library.base}/`}>{library.name}</a>
             </li>
           ))
       }

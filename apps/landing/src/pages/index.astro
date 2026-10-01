@@ -62,7 +62,7 @@ const themes = { dark: "tokyo-night", light: { ...tokyoNightLight, type: "light"
             {isLive && <CopyCommand command={library.install} />}
             <div class="links">
               {isLive ? (
-                <a class="primary" href={`${library.base}/`}>
+                <a class="primary" href={library.docsUrl ?? `${library.base}/`}>
                   Read the docs <span aria-hidden="true">→</span>
                 </a>
               ) : (

@@ -2,14 +2,14 @@
 
 The yielded.dev landing page and the shared Starlight theme that every library's docs use.
 
-Each library owns its docs in its own repository and deploys them to its own path:
+Each library owns its docs in its own repository:
 
-| Path                 | Source                                   | Deploys with          |
-| -------------------- | ---------------------------------------- | --------------------- |
-| `yielded.dev/`       | `apps/landing` (this repo)               | Alchemy static site   |
-| `yielded.dev/sync/`  | `yielded-dev/sync` → `docs/`             | Wrangler Worker route |
-| `yielded.dev/auth/`  | `yielded-dev/auth` → `docs/`             | Alchemy static site   |
-| `yielded.dev/agent/` | `effect-agent` → `docs/` (not yet moved) | —                     |
+| Path                | Source                       | Deploys with          |
+| ------------------- | ---------------------------- | --------------------- |
+| `yielded.dev/`      | `apps/landing` (this repo)   | Alchemy static site   |
+| `yielded.dev/sync/` | `yielded-dev/sync` → `docs/` | Wrangler Worker route |
+| `yielded.dev/auth/` | `yielded-dev/auth` → `docs/` | Alchemy static site   |
+| `effect-agent.com`  | `effect-agent` → `docs/`     | Separate deployment   |
 
 Cloudflare picks the most specific Worker route, so each library's `yielded.dev/<lib>*` route
 wins over the landing page's `yielded.dev/*`.
@@ -30,6 +30,9 @@ wins over the landing page's `yielded.dev/*`.
    `yieldedTheme({ library: "<id>" })` and a Worker route for `yielded.dev/<id>*`.
 3. Publish the theme and redeploy the landing page and the other docs sites so their switchers
    pick it up.
+
+For docs hosted elsewhere, set the library's `docsUrl` to the canonical HTTPS URL.
+The landing page and shared navigation use it instead of the yielded.dev path.
 
 ## Commands
 
