@@ -1,29 +1,9 @@
 ---
 /** Page title with the sidebar group it belongs to as an eyebrow. */
-interface Entry {
-  readonly type: "link" | "group";
-  readonly label: string;
-  readonly isCurrent?: boolean;
-  readonly entries?: ReadonlyArray<Entry>;
-}
+import { currentGroup } from "../sidebar.ts";
 
 const { entry, sidebar } = Astro.locals.starlightRoute;
-
-const findGroup = (entries: ReadonlyArray<Entry>, parent: string | undefined): string | undefined => {
-  for (const item of entries) {
-    if (item.type === "link" && item.isCurrent === true) return parent;
-
-    if (item.type === "group" && item.entries !== undefined) {
-      const found = findGroup(item.entries, item.label);
-
-      if (found !== undefined) return found;
-    }
-  }
-
-  return undefined;
-};
-
-const group = findGroup(sidebar as ReadonlyArray<Entry>, undefined);
+const group = currentGroup(sidebar);
 ---
 
 {group !== undefined && <p class="yl-eyebrow">{group}</p>}

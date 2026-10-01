@@ -17,7 +17,7 @@ wins over the landing page's `yielded.dev/*`.
 ## Layout
 
 - `packages/starlight-theme` — `@yielded/starlight-theme`, a Starlight plugin with the shared
-  design tokens, library switcher, and Markdown helpers. See its README.
+  design tokens, library switcher, link preview images, and Markdown helpers. See its README.
 - `apps/landing` — the static landing page. It uses the theme's tokens and library registry.
 - `scripts/migrate-vitepress.ts` — one-off converter for moving a VitePress docs folder to
   Starlight (titles, callouts, code titles).
