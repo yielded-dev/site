@@ -1,0 +1,770 @@
+---
+/**
+ * A small architecture map: nodes placed on a grid and joined by drawn connectors.
+ *
+ * ```mdx
+ * <FlowMap
+ *   title="Request path"
+ *   description="The client calls the routes, which call the service."
+ *   columns={2}
+ *   nodes={[
+ *     { id: "client", at: [1, 1], owner: "library", title: "Client", code: "Client.make(Api)" },
+ *     { id: "service", at: [1, 2], owner: "app", title: "Your service" },
+ *   ]}
+ *   edges={[{ from: "client", to: "service", label: "HTTP" }]}
+ * />
+ * ```
+ *
+ * Accent marks what the library runs, solid neutral marks your code, and dashed marks
+ * everything else. A boundary row, such as the network between browser and server, splits
+ * the map in two; its zone names sit at the left end, so keep nodes and labels clear of it.
+ * Groups outline a region of cells, such as one transaction or one grant.
+ */
+import { libraryOwner } from "../diagrams.ts";
+
+type Owner = "library" | "app" | "external";
+type Cell = readonly [row: number, column: number];
+
+interface Node {
+  readonly id: string;
+  /** Grid row and column, counted from 1. */
+  readonly at: Cell;
+  readonly owner: Owner;
+  readonly title: string;
+  readonly code?: string;
+  readonly note?: string;
+}
+
+interface Edge {
+  readonly from: string;
+  readonly to: string;
+  readonly label?: string;
+}
+
+interface Group {
+  readonly label: string;
+  /** The top-left and bottom-right cells the group outlines. */
+  readonly from: Cell;
+  readonly to: Cell;
+}
+
+interface Props {
+  /** Accessible name and description, read in place of the drawn connectors. */
+  readonly title: string;
+  readonly description: string;
+  readonly columns: number;
+  readonly nodes: ReadonlyArray<Node>;
+  readonly edges: ReadonlyArray<Edge>;
+  readonly boundary?: { readonly row: number; readonly above: string; readonly below: string };
+  readonly groups?: ReadonlyArray<Group>;
+}
+
+const { title, description, columns, nodes, edges, boundary, groups = [] } = Astro.props;
+
+const ownerLabel = { library: libraryOwner, app: "Your code", external: "External" } as const;
+
+const titleOf = (id: string) => {
+  const node = nodes.find((node) => node.id === id);
+
+  if (node === undefined) throw new Error(`FlowMap edge refers to unknown node "${id}"`);
+
+  return node.title;
+};
+
+const titlesIn = (inside: (cell: Cell) => boolean) => {
+  const members = nodes.filter(({ at }) => inside(at));
+
+  return { count: members.length, titles: members.map((node) => node.title).join(", ") };
+};
+
+// Zones without nodes are omitted; a group keeps its label even when it outlines none.
+const zones =
+  boundary === undefined
+    ? []
+    : (
+        [
+          [boundary.above, ([row]: Cell) => row < boundary.row],
+          [`Between ${boundary.above} and ${boundary.below}`, ([row]: Cell) => row === boundary.row],
+          [boundary.below, ([row]: Cell) => row > boundary.row],
+        ] as const
+      ).flatMap(([label, inside]) => {
+        const { count, titles } = titlesIn(inside);
+
+        return count === 0 ? [] : [`${label}: ${titles}`];
+      });
+
+const connections = [
+  ...edges.map(
+    ({ from, to, label }) =>
+      `${titleOf(from)} to ${titleOf(to)}${label === undefined ? "" : `: ${label}`}`,
+  ),
+  ...zones,
+  ...groups.map(({ label, from, to }) => {
+    const { titles } = titlesIn(
+      ([row, column]) => row >= from[0] && row <= to[0] && column >= from[1] && column <= to[1],
+    );
+
+    return `${label}: ${titles}`;
+  }),
+];
+
+const owners = (["library", "app", "external"] as const).filter((owner) =>
+  nodes.some((node) => node.owner === owner),
+);
+
+// A group on the first row needs room above it for its label.
+const groupOnTop = groups.some(({ from }) => from[0] === 1);
+
+// Narrow nodes break code after a dot or an opening parenthesis, never inside an identifier.
+const segments = (code: string) => code.split(/(?<=[.(])/);
+---
+
+<figure
+  class="flow not-content"
+  style={`--columns:${columns}`}
+  data-edges={JSON.stringify(edges.map(({ from, to }) => ({ from, to })))}
+>
+  <figcaption class="sr-only">{title}. {description}</figcaption>
+  <div class="panel" data-group-top={groupOnTop ? "" : undefined}>
+    <div class="stage">
+      <ul class="canvas" role="list">
+        {
+          boundary !== undefined && (
+            <li class="boundary" style={`--row:${boundary.row}`} aria-hidden="true">
+              <span class="zone above">{boundary.above}</span>
+              <span class="zone below">{boundary.below}</span>
+            </li>
+          )
+        }
+        {
+          groups.map(({ label, from, to }) => (
+            <li
+              class="group"
+              style={`--row:${from[0]};--row-end:${to[0] + 1};--column:${from[1]};--column-end:${to[1] + 1}`}
+              aria-hidden="true"
+            >
+              <span>{label}</span>
+            </li>
+          ))
+        }
+        {
+          nodes.map(({ id, at: [row, column], owner, title, code, note }) => (
+            <li
+              class="node"
+              data-node={id}
+              data-owner={owner}
+              style={`--row:${row};--column:${column}`}
+            >
+              <span class="sr-only">{ownerLabel[owner]}: </span>
+              <span class="title">{title}</span>
+              {code !== undefined && (
+                <code>
+                  {segments(code).map((segment) => (
+                    <>
+                      {segment}
+                      <wbr />
+                    </>
+                  ))}
+                </code>
+              )}
+              {note !== undefined && <span class="note">{note}</span>}
+            </li>
+          ))
+        }
+      </ul>
+      <svg class="wires" aria-hidden="true"></svg>
+      {
+        edges.map(({ label }, index) =>
+          label === undefined ? null : (
+            <span class="label" data-edge={index} aria-hidden="true">
+              {label}
+            </span>
+          ),
+        )
+      }
+    </div>
+    <p class="legend" aria-hidden="true">
+      {owners.map((owner) => <span data-owner={owner}>{ownerLabel[owner]}</span>)}
+    </p>
+  </div>
+  <ul class="sr-only">
+    {connections.map((connection) => <li>{connection}</li>)}
+  </ul>
+</figure>
+
+<script>
+  // Joins nodes with right-angled connectors. Nodes sharing a column or row get a straight
+  // line; otherwise the connector makes one rounded turn, on whichever side avoids other nodes.
+  interface Point {
+    readonly x: number;
+    readonly y: number;
+  }
+
+  interface Box {
+    readonly left: number;
+    readonly right: number;
+    readonly top: number;
+    readonly bottom: number;
+  }
+
+  const svgNs = "http://www.w3.org/2000/svg";
+  const radius = 10;
+  const head = 7;
+  // Shared spans narrower than this are treated as misaligned, so the line never grazes a corner.
+  const minOverlap = 24;
+
+  const route = (a: Box, b: Box, others: ReadonlyArray<Box>): ReadonlyArray<Point> => {
+    const left = Math.max(a.left, b.left);
+    const right = Math.min(a.right, b.right);
+
+    if (right - left >= minOverlap) {
+      const x = (left + right) / 2;
+
+      return b.top >= a.bottom
+        ? [
+            { x, y: a.bottom },
+            { x, y: b.top },
+          ]
+        : [
+            { x, y: a.top },
+            { x, y: b.bottom },
+          ];
+    }
+
+    const top = Math.max(a.top, b.top);
+    const bottom = Math.min(a.bottom, b.bottom);
+
+    if (bottom - top >= minOverlap) {
+      const y = (top + bottom) / 2;
+
+      return b.left >= a.right
+        ? [
+            { x: a.right, y },
+            { x: b.left, y },
+          ]
+        : [
+            { x: a.left, y },
+            { x: b.right, y },
+          ];
+    }
+
+    const from = { x: (a.left + a.right) / 2, y: (a.top + a.bottom) / 2 };
+    const to = { x: (b.left + b.right) / 2, y: (b.top + b.bottom) / 2 };
+    const down = to.y > from.y;
+    const forward = to.x > from.x;
+
+    const vertical = [
+      { x: from.x, y: down ? a.bottom : a.top },
+      { x: from.x, y: to.y },
+      { x: forward ? b.left : b.right, y: to.y },
+    ];
+
+    const horizontal = [
+      { x: forward ? a.right : a.left, y: from.y },
+      { x: to.x, y: from.y },
+      { x: to.x, y: down ? b.top : b.bottom },
+    ];
+
+    return [vertical, horizontal].find((points) => !blocked(points, others)) ?? vertical;
+  };
+
+  type Segment = readonly [start: Point, end: Point];
+
+  // Consecutive points as line segments.
+  const segmentsOf = (points: ReadonlyArray<Point>) => {
+    const segments: Array<Segment> = [];
+    let previous: Point | undefined;
+
+    for (const point of points) {
+      if (previous !== undefined) segments.push([previous, point]);
+      previous = point;
+    }
+
+    return segments;
+  };
+
+  const overlaps = (a: Box, b: Box) =>
+    a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+
+  const blocked = (points: ReadonlyArray<Point>, others: ReadonlyArray<Box>) =>
+    segmentsOf(points).some(([start, end]) => {
+      const segment = {
+        left: Math.min(start.x, end.x),
+        right: Math.max(start.x, end.x),
+        top: Math.min(start.y, end.y),
+        bottom: Math.max(start.y, end.y),
+      };
+
+      return others.some((box) => overlaps(segment, box));
+    });
+
+  const distance = (from: Point, to: Point) => Math.hypot(to.x - from.x, to.y - from.y);
+
+  const toward = (from: Point, to: Point, length: number): Point => {
+    const total = distance(from, to);
+
+    return {
+      x: from.x + ((to.x - from.x) / total) * length,
+      y: from.y + ((to.y - from.y) / total) * length,
+    };
+  };
+
+  const at = ({ x, y }: Point) => `${x} ${y}`;
+
+  // The line stops where the arrowhead begins, and the head stops just short of the node.
+  const draw = (points: ReadonlyArray<Point>) => {
+    const [first, ...rest] = segmentsOf(points);
+    const last = rest.at(-1) ?? first;
+
+    if (first === undefined || last === undefined) return { line: "", arrow: "" };
+
+    const [before, end] = last;
+    const tip = toward(end, before, 1);
+    const base = toward(tip, before, head);
+    const dx = (tip.x - base.x) / head;
+    const dy = (tip.y - base.y) / head;
+    let previous = first[0];
+    let line = `M ${at(previous)}`;
+
+    // Each later segment starts at a corner, rounded toward both of its neighbors.
+    for (const [corner, next] of rest) {
+      const r = Math.min(radius, distance(previous, corner) / 2, distance(corner, next) / 2);
+
+      line += ` L ${at(toward(corner, previous, r))}`;
+      line += ` Q ${at(corner)} ${at(toward(corner, next, r))}`;
+      previous = corner;
+    }
+
+    line += ` L ${at(base)}`;
+
+    const wing = (side: number) => at({ x: base.x - dy * 4 * side, y: base.y + dx * 4 * side });
+    const arrow = `M ${at(tip)} L ${wing(1)} L ${wing(-1)} Z`;
+
+    return { line, arrow };
+  };
+
+  const contains = (box: Box, { x, y }: Point) =>
+    x > box.left && x < box.right && y > box.top && y < box.bottom;
+
+  // A label masks the middle of a vertical segment or rides just above a horizontal one. It
+  // goes on the longest segment that holds it, or else any spot clear of nodes. A label with
+  // no clear spot stays hidden; the accessible summary still lists it.
+  const spot = (
+    points: ReadonlyArray<Point>,
+    label: HTMLElement,
+    nodes: ReadonlyArray<Box>,
+    groups: ReadonlyArray<Box>,
+  ) => {
+    const width = label.offsetWidth;
+    const height = label.offsetHeight;
+
+    const spots = segmentsOf(points)
+      .map(([start, end]) => {
+        const horizontal = start.y === end.y;
+        const length = distance(start, end);
+        const x = (start.x + end.x) / 2;
+        const y = (start.y + end.y) / 2;
+        const top = horizontal ? y - height - 3 : y - height / 2;
+        const box = { left: x - width / 2, right: x + width / 2, top, bottom: top + height };
+        const room = horizontal ? width : height + head * 2;
+        const clear = !nodes.some((other) => overlaps(box, other));
+
+        return { x, y, horizontal, length, clear, fits: clear && room <= length };
+      })
+      .sort((a, b) => b.length - a.length);
+
+    const best = spots.find(({ fits }) => fits) ?? spots.find(({ clear }) => clear);
+
+    return best === undefined
+      ? undefined
+      : { ...best, grouped: groups.some((box) => contains(box, best)) };
+  };
+
+  for (const flow of document.querySelectorAll<HTMLElement>(".flow")) {
+    const stage = flow.querySelector<HTMLElement>(".stage");
+    const svg = flow.querySelector<SVGSVGElement>(".wires");
+
+    if (stage === null || svg === null) continue;
+
+    const edges: ReadonlyArray<{ readonly from: string; readonly to: string }> = JSON.parse(
+      flow.dataset.edges ?? "[]",
+    );
+
+    const nodes = new Map(
+      [...flow.querySelectorAll<HTMLElement>("[data-node]")].map((node) => [
+        node.dataset.node ?? "",
+        node,
+      ]),
+    );
+
+    const groups = [...flow.querySelectorAll<HTMLElement>(".group")];
+
+    const labels = new Map(
+      [...flow.querySelectorAll<HTMLElement>("[data-edge]")].map((label) => [
+        Number(label.dataset.edge),
+        label,
+      ]),
+    );
+
+    const wires = edges.map((edge, index) => {
+      const line = document.createElementNS(svgNs, "path");
+      const arrow = document.createElementNS(svgNs, "path");
+
+      line.classList.add("line");
+      arrow.classList.add("head");
+      svg.append(line, arrow);
+
+      return { ...edge, line, arrow, label: labels.get(index) };
+    });
+
+    const layout = () => {
+      const origin = stage.getBoundingClientRect();
+
+      const measure = (element: Element): Box => {
+        const box = element.getBoundingClientRect();
+
+        return {
+          left: box.left - origin.left,
+          right: box.right - origin.left,
+          top: box.top - origin.top,
+          bottom: box.bottom - origin.top,
+        };
+      };
+
+      const boxes = new Map([...nodes].map(([id, node]) => [id, measure(node)]));
+      const groupBoxes = groups.map(measure);
+
+      svg.setAttribute("width", `${origin.width}`);
+      svg.setAttribute("height", `${origin.height}`);
+
+      for (const wire of wires) {
+        const from = boxes.get(wire.from);
+        const to = boxes.get(wire.to);
+
+        if (from === undefined || to === undefined) continue;
+
+        const others = [...boxes]
+          .filter(([id]) => id !== wire.from && id !== wire.to)
+          .map(([, box]) => box);
+
+        const points = route(from, to, others);
+        const { line, arrow } = draw(points);
+
+        wire.line.setAttribute("d", line);
+        wire.arrow.setAttribute("d", arrow);
+
+        if (wire.label === undefined) continue;
+
+        const place = spot(points, wire.label, [...boxes.values()], groupBoxes);
+
+        wire.label.toggleAttribute("data-unplaced", place === undefined);
+
+        if (place === undefined) continue;
+
+        wire.label.style.left = `${place.x}px`;
+        wire.label.style.top = `${place.y}px`;
+        wire.label.toggleAttribute("data-above", place.horizontal);
+        wire.label.toggleAttribute("data-grouped", place.grouped);
+      }
+
+      flow.dataset.drawn = "";
+    };
+
+    const observer = new ResizeObserver(layout);
+
+    observer.observe(stage);
+    for (const node of nodes.values()) observer.observe(node);
+  }
+</script>
+
+<style>
+  .flow {
+    margin: 1.75rem 0 0;
+    container-type: inline-size;
+  }
+
+  .panel {
+    --library: var(--sl-color-accent);
+    --surface: var(--yl-bg-sunken);
+    --pad: 1.5rem;
+    --gap-x: 2.5rem;
+    --gap-y: 2.5rem;
+    --group-inset: 0.75rem;
+    --group-fill: color-mix(in srgb, var(--yl-text) 3%, var(--surface));
+
+    padding: var(--pad) var(--pad) 1rem;
+    overflow: hidden;
+    border: 1px solid var(--yl-border);
+    border-radius: 0.6rem;
+    background-color: var(--surface);
+    background-image:
+      linear-gradient(var(--yl-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--yl-grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: -1px -1px;
+  }
+
+  .panel[data-group-top] {
+    padding-top: calc(var(--pad) + 0.75rem);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .stage {
+    position: relative;
+  }
+
+  .canvas {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+    gap: var(--gap-y) var(--gap-x);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .node {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+    grid-row: var(--row);
+    grid-column: var(--column);
+    min-width: 0;
+    margin: 0;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid var(--yl-border-strong);
+    border-radius: 0.5rem;
+    background: var(--yl-bg-raised);
+  }
+
+  .node[data-owner="library"] {
+    border-color: color-mix(in srgb, var(--library) 50%, var(--yl-border));
+    background: color-mix(in srgb, var(--library) 10%, var(--yl-bg-raised));
+  }
+
+  .node[data-owner="external"] {
+    border-style: dashed;
+    background: var(--group-fill);
+  }
+
+  .title {
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-sm);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .flow .node code {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--sl-color-gray-3);
+    font-family: var(--sl-font-mono);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .flow .node[data-owner="library"] code {
+    color: var(--library);
+  }
+
+  .note {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+    line-height: 1.45;
+  }
+
+  /* A group outlines its cells and the gaps around them, labeled on its top edge. */
+  .group {
+    position: relative;
+    z-index: 0;
+    grid-row: var(--row) / var(--row-end);
+    grid-column: var(--column) / var(--column-end);
+    margin: calc(var(--group-inset) * -1);
+    border: 1px solid var(--yl-border-strong);
+    border-radius: 0.75rem;
+    background: var(--group-fill);
+  }
+
+  .group span,
+  .zone {
+    color: var(--sl-color-gray-4);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-xs);
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .group span {
+    position: absolute;
+    top: 0;
+    left: 0.6rem;
+    padding: 0 0.35rem;
+    background: var(--surface);
+    translate: 0 -50%;
+  }
+
+  /* The boundary runs edge to edge; zone names sit on either side of it. */
+  .boundary {
+    position: relative;
+    grid-row: var(--row);
+    grid-column: 1 / -1;
+    min-height: 2.75rem;
+    margin: 0 calc(var(--pad) * -1);
+  }
+
+  .boundary::before {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    left: 0;
+    border-top: 1px dashed var(--yl-border-strong);
+    content: "";
+  }
+
+  .zone {
+    position: absolute;
+    left: var(--pad);
+  }
+
+  .zone.above {
+    bottom: calc(50% + 0.5rem);
+  }
+
+  .zone.below {
+    top: calc(50% + 0.5rem);
+  }
+
+  /* Connectors are drawn by the script above once the nodes are laid out. */
+  .wires {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .wires :global(.line) {
+    fill: none;
+    stroke: var(--sl-color-gray-3);
+    stroke-width: 1.5;
+  }
+
+  .wires :global(.head) {
+    fill: var(--sl-color-gray-3);
+  }
+
+  .label {
+    position: absolute;
+    z-index: 3;
+    visibility: hidden;
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.3rem;
+    background: var(--surface);
+    color: var(--sl-color-gray-2);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-xs);
+    line-height: 1.3;
+    text-align: center;
+    text-wrap: balance;
+    translate: -50% -50%;
+    /* At most one column wide, so a label never covers a neighboring node. */
+    width: max-content;
+    min-width: min-content;
+    max-width: calc((100% - (var(--columns) - 1) * var(--gap-x)) / var(--columns));
+  }
+
+  .label[data-grouped] {
+    background: var(--group-fill);
+  }
+
+  /* A label masks the vertical line it sits on, but rides above a horizontal one. */
+  .label[data-above] {
+    background: none;
+    translate: -50% calc(-100% - 0.15rem);
+  }
+
+  .flow[data-drawn] .label:not([data-unplaced]) {
+    visibility: visible;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem 1.25rem;
+    margin: 1.25rem 0 0;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+  }
+
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .legend span::before {
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 1px solid var(--yl-border-strong);
+    border-radius: 0.2rem;
+    background: var(--yl-bg-raised);
+    content: "";
+  }
+
+  .legend [data-owner="library"]::before {
+    border-color: color-mix(in srgb, var(--library) 50%, var(--yl-border));
+    background: color-mix(in srgb, var(--library) 10%, var(--yl-bg-raised));
+  }
+
+  .legend [data-owner="external"]::before {
+    border-style: dashed;
+    background: none;
+  }
+
+  @container (max-width: 36rem) {
+    .panel {
+      --pad: 0.875rem;
+      --gap-x: 1rem;
+      --gap-y: 2.25rem;
+      --group-inset: 0.5rem;
+    }
+
+    .label {
+      font-size: 0.6875rem;
+    }
+
+    .node {
+      padding: 0.55rem 0.5rem;
+    }
+
+    .title {
+      font-size: var(--sl-text-xs);
+    }
+
+    .note {
+      font-size: 0.6875rem;
+    }
+
+    .flow .node code {
+      font-size: 0.625rem;
+    }
+
+    .legend {
+      justify-content: flex-start;
+    }
+  }
+</style>

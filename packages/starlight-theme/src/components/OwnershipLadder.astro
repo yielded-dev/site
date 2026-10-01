@@ -1,0 +1,444 @@
+---
+/**
+ * Who owns each layer of a stack at each level of adoption. The accent region is what the
+ * library runs; the stepped rule is the boundary between it and your code.
+ *
+ * ```mdx
+ * <OwnershipLadder
+ *   caption="Who owns each layer at each storage level"
+ *   levels={[{ name: "Managed tables", api: "Persistence.managed(…)" }, …]}
+ *   layers={[{ name: "Queries", cells: [{ owner: "library", note: "Run for you." }, …] }, …]}
+ * />
+ * ```
+ *
+ * Each layer has one cell per level. `shared` adds a final row that spans every level;
+ * its note may contain backtick `code` spans.
+ */
+import { inline, libraryOwner } from "../diagrams.ts";
+
+type Owner = "library" | "app";
+
+interface Props {
+  readonly caption: string;
+  readonly levels: ReadonlyArray<{
+    readonly name: string;
+    readonly api: string;
+    readonly links?: ReadonlyArray<{ readonly name: string; readonly href: string }>;
+  }>;
+  readonly layers: ReadonlyArray<{
+    readonly name: string;
+    readonly cells: ReadonlyArray<{ readonly owner: Owner; readonly note: string }>;
+  }>;
+  readonly shared?: { readonly name: string; readonly label: string; readonly note: string };
+  /** Row heading for the levels' links. */
+  readonly linksLabel?: string;
+}
+
+const { caption, levels, layers, shared, linksLabel = "Examples" } = Astro.props;
+
+const ownerLabel = { library: libraryOwner, app: "You" } as const;
+
+const hasLinks = levels.some(({ links = [] }) => links.length > 0);
+
+// The boundary rule runs along each cell edge where ownership changes.
+const edges = (row: number, column: number) => {
+  const own = layers[row]?.cells[column]?.owner;
+  const above = layers[row - 1]?.cells[column]?.owner;
+  const right = layers[row]?.cells[column + 1]?.owner;
+
+  const sides = [
+    above !== undefined && above !== own ? "top" : "",
+    right !== undefined && right !== own ? "right" : "",
+  ];
+
+  return sides.join(" ").trim() || undefined;
+};
+
+// Narrow columns break an API name after a dot, never inside an identifier.
+const segments = (api: string) => api.split(/(?<=\.)/);
+---
+
+<figure class="ladder not-content">
+  <table>
+    <caption class="sr-only">{caption}</caption>
+    <thead>
+      <tr>
+        <td></td>
+        {
+          levels.map(({ name, api }) => (
+            <th scope="col">
+              <span class="level">{name}</span>
+              <code class="api">
+                {segments(api).map((segment) => (
+                  <>
+                    {segment}
+                    <wbr />
+                  </>
+                ))}
+              </code>
+            </th>
+          ))
+        }
+      </tr>
+    </thead>
+    <tbody>
+      {
+        layers.map(({ name, cells }, row) => (
+          <tr>
+            <th scope="row">{name}</th>
+            {cells.map(({ owner, note }, column) => (
+              <td data-owner={owner} data-edge={edges(row, column)}>
+                <span class="owner">{ownerLabel[owner]}</span>
+                <span class="note">{note}</span>
+              </td>
+            ))}
+          </tr>
+        ))
+      }
+      {
+        shared !== undefined && (
+          <tr class="same">
+            <th scope="row">{shared.name}</th>
+            <td colspan={levels.length}>
+              <span class="owner">{shared.label}</span>
+              <span class="note">
+                {inline(shared.note).map((part) => ("code" in part ? <code>{part.code}</code> : part.text))}
+              </span>
+            </td>
+          </tr>
+        )
+      }
+    </tbody>
+    {
+      hasLinks && (
+        <tfoot>
+          <tr>
+            <th scope="row">{linksLabel}</th>
+            {levels.map(({ links = [] }) => (
+              <td>
+                {links.map(({ name, href }, index) => (
+                  <>
+                    {index > 0 && ", "}
+                    <a {href}>{name}</a>
+                  </>
+                ))}
+              </td>
+            ))}
+          </tr>
+        </tfoot>
+      )
+    }
+  </table>
+
+  <ol class="stacked">
+    {
+      levels.map(({ name, api, links = [] }, column) => (
+        <li>
+          <p class="level">{name}</p>
+          <code class="api">{api}</code>
+          <dl>
+            {layers.map((layer, row) => {
+              const cell = layer.cells[column];
+
+              if (cell === undefined) return null;
+
+              return (
+                <div data-owner={cell.owner} data-edge={edges(row, column)}>
+                  <dt>{layer.name}</dt>
+                  <dd class="owner">{ownerLabel[cell.owner]}</dd>
+                  <dd class="note">{cell.note}</dd>
+                </div>
+              );
+            })}
+          </dl>
+          {links.length > 0 && (
+            <p class="apps">
+              {links.map(({ name, href }, index) => (
+                <>
+                  {index > 0 && ", "}
+                  <a {href}>{name}</a>
+                </>
+              ))}
+            </p>
+          )}
+        </li>
+      ))
+    }
+    {
+      shared !== undefined && (
+        <li class="same">
+          <p class="level">{shared.name}</p>
+          <p>
+            <span class="owner">{shared.label}</span>
+            {inline(shared.note).map((part) => ("code" in part ? <code>{part.code}</code> : part.text))}
+          </p>
+        </li>
+      )
+    }
+  </ol>
+</figure>
+
+<style>
+  .ladder {
+    --library: var(--sl-color-accent);
+    --library-fill: color-mix(in srgb, var(--library) 9%, var(--yl-bg-raised));
+    --rule: 2px solid var(--library);
+
+    margin: 1.75rem 0 0;
+    container-type: inline-size;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+  }
+
+  figure.ladder :is(th, td) {
+    padding: 0.85rem 1rem;
+    border: 0;
+    background: none;
+    vertical-align: top;
+    text-align: left;
+  }
+
+  thead th {
+    padding-bottom: 1rem;
+  }
+
+  thead td,
+  tbody th,
+  tfoot th {
+    width: 22%;
+  }
+
+  .level {
+    display: block;
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-base);
+    font-weight: 620;
+    letter-spacing: -0.015em;
+  }
+
+  .ladder .api,
+  .ladder .note code,
+  .stacked .same code {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--sl-color-gray-3);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-xs);
+  }
+
+  .ladder .note code,
+  .stacked .same code {
+    color: var(--sl-color-white);
+  }
+
+  tbody th,
+  tfoot th {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+    font-weight: 500;
+  }
+
+  .ladder tbody td {
+    border-top: 1px solid var(--yl-border);
+    border-left: 1px solid var(--yl-border);
+  }
+
+  .ladder tbody tr > td:last-child {
+    border-right: 1px solid var(--yl-border);
+  }
+
+  tbody tr:first-child td:first-of-type {
+    border-top-left-radius: 0.6rem;
+  }
+
+  tbody tr:first-child td:last-child {
+    border-top-right-radius: 0.6rem;
+  }
+
+  .owner {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-sm);
+    font-weight: 600;
+  }
+
+  .note {
+    display: block;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+    line-height: 1.5;
+  }
+
+  .ladder td[data-owner="app"] {
+    background: var(--yl-bg-raised);
+  }
+
+  .ladder td[data-owner="library"] {
+    background: var(--library-fill);
+  }
+
+  td[data-owner="library"] .owner {
+    color: var(--library);
+  }
+
+  /* The stepped boundary between your layers and the ones the library runs. */
+  .ladder td[data-edge~="top"] {
+    border-top: var(--rule);
+  }
+
+  td[data-edge~="right"] {
+    box-shadow: inset -2px 0 0 var(--library);
+  }
+
+  .ladder tr.same td {
+    border: 1px solid var(--yl-border-strong);
+    border-radius: 0 0 0.6rem 0.6rem;
+    background: var(--yl-bg);
+    text-align: center;
+  }
+
+  tr.same .owner {
+    display: inline;
+    margin-right: 0.5rem;
+  }
+
+  tr.same .note {
+    display: inline;
+  }
+
+  .ladder tfoot td,
+  .ladder tfoot th {
+    padding-top: 0.9rem;
+    font-size: var(--sl-text-sm);
+  }
+
+  .ladder a {
+    color: var(--sl-color-white);
+    text-decoration-color: color-mix(in srgb, var(--library) 70%, transparent);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 0.2em;
+  }
+
+  .ladder a:hover {
+    text-decoration-color: var(--library);
+  }
+
+  .ladder a:focus-visible {
+    outline: 2px solid var(--library);
+    outline-offset: 2px;
+  }
+
+  /* Narrow containers: one stack per level, with the same boundary rule. */
+  .stacked {
+    display: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .stacked > li {
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--yl-border-strong);
+  }
+
+  .stacked p {
+    margin: 0;
+  }
+
+  .stacked dl {
+    margin: 0.85rem 0 0;
+    overflow: hidden;
+    border: 1px solid var(--yl-border);
+    border-radius: 0.6rem;
+  }
+
+  .stacked dl > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: 1rem;
+    padding: 0.7rem 0.85rem;
+    background: var(--yl-bg-raised);
+  }
+
+  .stacked dl > div + div {
+    border-top: 1px solid var(--yl-border);
+  }
+
+  .stacked dl > div[data-owner="library"] {
+    background: var(--library-fill);
+  }
+
+  .stacked dl > div[data-edge~="top"] {
+    border-top: var(--rule);
+  }
+
+  .stacked dt {
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-sm);
+    font-weight: 500;
+  }
+
+  .stacked dd {
+    margin: 0;
+  }
+
+  .stacked .owner {
+    font-size: var(--sl-text-xs);
+    line-height: inherit;
+  }
+
+  .stacked [data-owner="library"] .owner {
+    color: var(--library);
+  }
+
+  .stacked .note {
+    grid-column: 1 / -1;
+    margin-top: 0.15rem;
+  }
+
+  .stacked .apps {
+    margin-top: 0.75rem;
+    font-size: var(--sl-text-sm);
+  }
+
+  .stacked .same {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+  }
+
+  .stacked .same p + p {
+    margin-top: 0.35rem;
+  }
+
+  .stacked .same .owner {
+    display: inline;
+    margin-right: 0.4rem;
+  }
+
+  @container (max-width: 40rem) {
+    figure.ladder table {
+      display: none;
+    }
+
+    .stacked {
+      display: block;
+    }
+  }
+</style>

@@ -25,17 +25,19 @@ and explicit compiler setup.
 ## Boundaries
 
 - `packages/starlight-theme` is published to npm and consumed by the sync and auth
-  docs. Its plugin options, exports, `Snippet` component, `--yl-*` custom properties,
-  and Markdown behavior (link rewriting, `{{KEY}}` replacements, includes) are public
-  API. Record consumer-visible changes with a changeset.
+  docs. Its plugin options, exports, `Snippet` and diagram components, `--yl-*` custom
+  properties, and Markdown behavior (link rewriting, `{{KEY}}` replacements, includes)
+  are public API. Record consumer-visible changes with a changeset.
 - Keep the theme manifest's dependency ranges explicit, without `catalog:` or
   `workspace:`. It publishes with `changeset publish` and is also installed from a
   local path while developing a docs site.
 - `libraries.ts` is the single source for library names, paths, accents, taglines,
   and install commands. The header switcher, docs footer, and landing page read it.
 - Use `bun add` for Auth and Sync consumer installation examples.
-- Use fenced `mermaid` blocks for documentation flow diagrams. The theme owns
-  rendering and colors; give diagrams an `accTitle` and `accDescr`.
+- Library docs draw architecture flows with `FlowMap` and request sequences with
+  `Trace`; give each `FlowMap` a `title` and `description`. Use fenced `mermaid`
+  blocks, with an `accTitle` and `accDescr`, for other diagram types. The theme owns
+  rendering and colors.
 - The landing page lives in `apps/landing` and deploys through `alchemy.run.ts` to
   `yielded.dev/*`. Library docs deploy from their own repositories on more specific
   `yielded.dev/<library>*` routes.
