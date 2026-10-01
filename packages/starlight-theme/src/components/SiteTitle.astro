@@ -28,7 +28,7 @@ const { siteTitleHref } = Astro.locals.starlightRoute;
         {
           libraries.map((library) => {
             const isCurrent = library.id === current.id;
-            const href = isCurrent ? siteTitleHref : `${library.base}/`;
+            const href = isCurrent ? siteTitleHref : (library.docsUrl ?? `${library.base}/`);
             const style = `--yl-item-dark:${library.accent.dark};--yl-item-light:${library.accent.light}`;
 
             return (

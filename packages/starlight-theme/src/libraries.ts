@@ -7,6 +7,8 @@ export interface Library {
   readonly description: string;
   /** Path on yielded.dev where the library's docs are served, without a trailing slash. */
   readonly base: `/${string}`;
+  /** Canonical docs URL when a library is hosted outside yielded.dev. */
+  readonly docsUrl?: `https://${string}`;
   readonly repository: string;
   /** Install command shown on the landing page. */
   readonly install: string;
@@ -50,9 +52,10 @@ export const libraries: ReadonlyArray<Library> = [
     description:
       "Define inputs, outputs, and tools with schemas. Effect Agent runs the loop, executes tools, and validates the result, with typed errors, streaming, and bounded execution.",
     base: "/agent",
+    docsUrl: "https://effect-agent.com/",
     repository: "https://github.com/danieljvdm/effect-agent",
-    install: "npm install effect-agent@beta",
-    status: "soon",
+    install: "bun add effect-agent@beta",
+    status: "live",
     accent: { dark: "#b9a4ff", light: "#5b3fd1" },
   },
 ];

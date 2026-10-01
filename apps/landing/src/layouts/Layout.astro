@@ -41,7 +41,7 @@ const { title, description } = Astro.props;
         {
           libraries
             .filter((library) => library.status === "live")
-            .map((library) => <a href={`${library.base}/`}>{library.name}</a>)
+            .map((library) => <a href={library.docsUrl ?? `${library.base}/`}>{library.name}</a>)
         }
         <a class="icon-link" href="https://github.com/yielded-dev" aria-label="yielded on GitHub">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">

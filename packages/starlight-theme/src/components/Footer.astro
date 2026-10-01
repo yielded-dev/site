@@ -17,7 +17,7 @@ import Mark from "./Mark.astro";
     {
       libraries
         .filter((library) => library.status === "live")
-        .map((library) => <a href={`${library.base}/`}>{library.name}</a>)
+        .map((library) => <a href={library.docsUrl ?? `${library.base}/`}>{library.name}</a>)
     }
     <a href="https://github.com/yielded-dev">GitHub</a>
   </nav>
