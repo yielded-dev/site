@@ -90,7 +90,9 @@ const { title = data.title, tagline, image, actions = [] } = data.hero ?? {};
     margin-top: 2.25rem;
   }
 
-  .yl-hero-actions :global(.sl-link-button) {
+  .yl-hero-actions :global(.sl-link-button),
+  .yl-hero-actions :global(.yl-command) {
+    min-height: 3rem;
     margin: 0;
   }
 </style>
