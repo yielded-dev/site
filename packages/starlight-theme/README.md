@@ -54,6 +54,7 @@ flowchart LR
 ```
 ````
 
+Use Mermaid for diagram types the [diagram components](#diagram-components) do not cover.
 Use `accTitle` and `accDescr` to give diagrams accessible names and descriptions.
 The shared renderer in `src/mermaid.ts` controls typography, spacing, and colors;
 `src/styles/mermaid.css` controls surfaces, shapes, and label masking. Keep each
@@ -70,6 +71,47 @@ import { Snippet } from "@yielded/starlight-theme/components";
 
 `src` resolves from the docs project root. A Markdown source must contain one code block; any
 other file is used as-is, and `// #region name` markers select part of it.
+
+## Diagram components
+
+Draw architecture and request flows with components when ownership matters. The accent
+marks what the library runs, named from the plugin's `library` option ("Yielded Auth");
+neutral marks the application's code. Each component lays out for narrow screens and
+both color schemes; its props are documented in its source.
+
+| Component         | Shows                                                                          |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `FlowMap`         | Nodes on a grid joined by connectors, with an optional boundary row and groups |
+| `Trace`           | One request moving between lanes, step by step                                 |
+| `CallSites`       | A source block wired to the places that call it                                |
+| `OwnershipLadder` | Who owns each layer at each level of adoption                                  |
+| `TableMap`        | An application table beside the managed tables that reference it               |
+
+```mdx
+import { FlowMap } from "@yielded/starlight-theme/components";
+
+<FlowMap
+  title="Shared contract"
+  description="The client sends contract actions over HTTP to the routes, which call the service."
+  columns={3}
+  boundary={{ row: 2, above: "Browser", below: "Server" }}
+  nodes={[
+    { id: "client", at: [1, 3], owner: "library", title: "Client", code: "Client.make(Api)" },
+    { id: "routes", at: [3, 3], owner: "library", title: "HTTP routes" },
+    { id: "service", at: [3, 2], owner: "app", title: "Your service" },
+  ]}
+  edges={[
+    { from: "client", to: "routes", label: "HTTP" },
+    { from: "routes", to: "service" },
+  ]}
+/>
+```
+
+Place each node with `at: [row, column]`. Connectors run straight between nodes that share
+a row or column and take one rounded turn otherwise, so keep connected nodes aligned and
+the path between them clear. `title` and `description` name the diagram for screen readers.
+FlowMap and Trace draw their connectors with a small script; without JavaScript, the nodes
+and steps still render.
 
 ## Installing with Bun's isolated linker
 

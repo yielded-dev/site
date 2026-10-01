@@ -1,0 +1,485 @@
+---
+/**
+ * One request traced through the code that handles it. Each step sits on the lane that
+ * runs it; the path shows the request moving between lanes as the reader scrolls.
+ *
+ * ```mdx
+ * <Trace
+ *   steps={[
+ *     { lane: "browser", title: "Call the contract", code: "yield* client.signIn(input)" },
+ *     { lane: "library", title: "Decode the request", detail: "The route decodes the input." },
+ *   ]}
+ * />
+ * ```
+ *
+ * Lanes default to the browser, the library, and your code. The `library` lane carries the
+ * accent. Steps without a `detail` render compactly.
+ */
+import { inline, libraryOwner } from "../diagrams.ts";
+
+interface Props {
+  readonly lanes?: ReadonlyArray<{ readonly id: string; readonly label: string }>;
+  readonly steps: ReadonlyArray<{
+    readonly lane: string;
+    readonly title: string;
+    readonly code?: string;
+    readonly detail?: string;
+  }>;
+}
+
+const {
+  lanes = [
+    { id: "browser", label: "Browser" },
+    { id: "library", label: libraryOwner },
+    { id: "app", label: "Your code" },
+  ],
+  steps,
+} = Astro.props;
+
+const rows = steps.map((step) => {
+  const index = lanes.findIndex(({ id }) => id === step.lane);
+  const lane = lanes[index];
+
+  if (lane === undefined) throw new Error(`Trace step refers to unknown lane "${step.lane}"`);
+
+  return { ...step, where: lane.label, style: `--lane:${index}` };
+});
+
+// One faint lifeline down the middle of each lane.
+const lifelines = [
+  `--lanes:${lanes.length}`,
+  `--lifelines:${lanes.map(() => "linear-gradient(var(--yl-border), var(--yl-border))").join(",")}`,
+  `--lifeline-at:${lanes.map((_, index) => `calc(var(--lane-w) * ${index + 0.5}) 0`).join(",")}`,
+].join(";");
+---
+
+<figure class="trace not-content" style={lifelines}>
+  <div class="lanes" aria-hidden="true">
+    {lanes.map(({ id, label }) => <span data-lane={id}>{label}</span>)}
+  </div>
+  <div class="steps">
+    <svg class="route" aria-hidden="true">
+      <path class="route-base" />
+      <path class="route-live" />
+      <g class="head">
+        <circle class="halo" r="9" />
+        <circle r="4" />
+      </g>
+    </svg>
+    <ol>
+      {
+        rows.map(({ lane, where, title, code, detail, style }) => (
+          <li {style} data-compact={detail === undefined ? "" : undefined}>
+            <div class="track" aria-hidden="true">
+              <span class="stop" data-lane={lane} />
+            </div>
+            <div class="body">
+              <p class="where" data-lane={lane}>
+                {where}
+              </p>
+              <p class="title">{title}</p>
+              {code !== undefined && <code class="call">{code}</code>}
+              {detail !== undefined && (
+                <p class="detail">
+                  {inline(detail).map((part) => ("code" in part ? <code>{part.code}</code> : part.text))}
+                </p>
+              )}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</figure>
+
+<script>
+  // Draws the request's route as the reader scrolls. With reduced motion, the whole route
+  // shows at once.
+  const radius = 12;
+
+  interface Stop {
+    readonly x: number;
+    readonly y: number;
+    /** Route length from the first stop. */
+    readonly length: number;
+  }
+
+  for (const trace of document.querySelectorAll<HTMLElement>(".trace")) {
+    const steps = trace.querySelector<HTMLElement>(".steps");
+    const svg = trace.querySelector<SVGSVGElement>(".route");
+    const base = trace.querySelector<SVGPathElement>(".route-base");
+    const live = trace.querySelector<SVGPathElement>(".route-live");
+    const head = trace.querySelector<SVGGElement>(".head");
+
+    if (steps === null || svg === null || base === null || live === null || head === null) {
+      continue;
+    }
+
+    const stops = [...trace.querySelectorAll<HTMLElement>(".stop")];
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    let route: Array<Stop> = [];
+    let total = 0;
+    let reached = -1;
+    let frame = 0;
+
+    const layout = () => {
+      const origin = steps.getBoundingClientRect();
+
+      svg.setAttribute("width", `${origin.width}`);
+      svg.setAttribute("height", `${origin.height}`);
+
+      // Down the current lane, then a quarter turn into the next stop's lane.
+      let d = "";
+      let from: Stop | undefined;
+
+      route = [];
+      total = 0;
+
+      for (const stop of stops) {
+        const box = stop.getBoundingClientRect();
+        const x = box.left + box.width / 2 - origin.left;
+        const y = box.top + box.height / 2 - origin.top;
+
+        if (from === undefined) {
+          d = `M ${x} ${y}`;
+        } else {
+          const dx = x - from.x;
+
+          if (Math.abs(dx) < 1) {
+            d += ` L ${from.x} ${y}`;
+            total += y - from.y;
+          } else {
+            const r = Math.min(radius, Math.abs(dx), y - from.y);
+            const direction = Math.sign(dx);
+
+            d += ` L ${from.x} ${y - r}`;
+            d += ` A ${r} ${r} 0 0 ${direction > 0 ? 0 : 1} ${from.x + direction * r} ${y}`;
+            d += ` L ${x} ${y}`;
+            total += y - r - from.y + (Math.PI * r) / 2 + Math.abs(dx) - r;
+          }
+        }
+
+        from = { x, y, length: total };
+        route.push(from);
+      }
+
+      base.setAttribute("d", d);
+      live.setAttribute("d", d);
+      live.style.strokeDasharray = `${total} ${total}`;
+      update();
+    };
+
+    // The head follows the middle of the viewport, but the route always starts at the first
+    // stop on load and finishes by the end of the page, whatever the viewport height.
+    const progress = () => {
+      const [first, ...rest] = route;
+      const last = rest.at(-1) ?? first;
+
+      if (first === undefined || last === undefined) return 0;
+
+      const top = steps.getBoundingClientRect().top + window.scrollY;
+      const middle = window.innerHeight / 2;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const start = Math.max(0, Math.min(top + first.y - middle, maxScroll));
+      const end = Math.max(start, Math.min(top + last.y - middle, maxScroll));
+
+      const share =
+        end - start < 1 ? 1 : Math.min(1, Math.max(0, (window.scrollY - start) / (end - start)));
+
+      const y = first.y + share * (last.y - first.y);
+
+      if (share >= 1) return total;
+      if (y <= first.y) return 0;
+
+      let from = first;
+
+      for (const to of rest) {
+        if (y < to.y) return from.length + (to.length - from.length) * ((y - from.y) / (to.y - from.y));
+
+        from = to;
+      }
+
+      return total;
+    };
+
+    const update = () => {
+      frame = 0;
+
+      // Anchor navigation can scroll before the first ResizeObserver callback.
+      if (route.length === 0) return;
+
+      const length = reduce.matches ? total : progress();
+
+      live.style.strokeDashoffset = `${total - length}`;
+
+      const moving = length > 0 && length < total;
+
+      head.style.opacity = moving ? "1" : "0";
+
+      if (moving) {
+        const point = live.getPointAtLength(length);
+
+        head.setAttribute("transform", `translate(${point.x} ${point.y})`);
+      }
+
+      const latest = route.findLastIndex((stop) => stop.length <= length + 0.5);
+
+      stops.forEach((stop, index) => {
+        stop.toggleAttribute("data-reached", index <= latest);
+        // Pulse once when the route first arrives at a stop.
+        if (index === latest && latest > reached && !reduce.matches) {
+          stop.classList.remove("arrived");
+          void stop.offsetWidth;
+          stop.classList.add("arrived");
+        }
+      });
+
+      reached = Math.max(reached, latest);
+    };
+
+    const schedule = () => {
+      if (frame === 0) frame = window.requestAnimationFrame(update);
+    };
+
+    trace.dataset.route = "";
+    new ResizeObserver(layout).observe(steps);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    reduce.addEventListener("change", update);
+  }
+</script>
+
+<style>
+  .trace {
+    --lane-w: 5.75rem;
+    --stop-y: 0.8rem;
+    --path: var(--sl-color-gray-3);
+    --library: var(--sl-color-accent);
+
+    margin: 2rem 0 0;
+  }
+
+  .lanes,
+  li {
+    display: grid;
+    grid-template-columns: calc(var(--lane-w) * var(--lanes)) minmax(0, 1fr);
+    column-gap: 1.25rem;
+  }
+
+  .lanes {
+    grid-template-columns: repeat(var(--lanes), var(--lane-w));
+    margin-bottom: 0.75rem;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .lanes [data-lane="library"],
+  .where[data-lane="library"] {
+    color: var(--library);
+  }
+
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Faint lifelines mark each lane; the solid path is the request. */
+  .track {
+    position: relative;
+    background-image: var(--lifelines);
+    background-repeat: no-repeat;
+    background-size: 1px 100%;
+    background-position: var(--lifeline-at);
+  }
+
+  :where(.track span) {
+    position: absolute;
+    border: 0 solid var(--path);
+  }
+
+  .stop {
+    top: var(--stop-y);
+    left: calc(var(--lane-w) * (var(--lane) + 0.5));
+    width: 0.8rem;
+    height: 0.8rem;
+    border-width: 2px;
+    border-radius: 50%;
+    background: var(--yl-bg);
+    translate: -50% -50%;
+  }
+
+  .stop[data-lane="library"] {
+    border-color: var(--library);
+    background: var(--library);
+  }
+
+  /* The route is drawn by the script below, as the reader scrolls. */
+  .steps {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .route {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .route path {
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .route-base {
+    stroke: var(--yl-border-strong);
+  }
+
+  .route-live {
+    stroke: var(--path);
+  }
+
+  .head {
+    fill: var(--library);
+    transition: opacity 200ms ease;
+  }
+
+  .head .halo {
+    opacity: 0.22;
+  }
+
+  .stop {
+    --pulse: var(--path);
+
+    z-index: 2;
+    transition:
+      background-color 250ms ease,
+      border-color 250ms ease;
+  }
+
+  .stop[data-lane="library"] {
+    --pulse: var(--library);
+  }
+
+  .trace[data-route] .stop:not([data-reached]) {
+    border-color: var(--yl-border-strong);
+    background: var(--yl-bg);
+  }
+
+  .stop.arrived {
+    animation: arrive 700ms ease-out;
+  }
+
+  @keyframes arrive {
+    from {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--pulse) 55%, transparent);
+    }
+
+    to {
+      box-shadow: 0 0 0 10px transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stop,
+    .head {
+      transition: none;
+    }
+
+    .stop.arrived {
+      animation: none;
+    }
+  }
+
+  .body {
+    padding-bottom: 1.75rem;
+  }
+
+  li[data-compact] .body {
+    padding-bottom: 1rem;
+  }
+
+  li:last-child .body {
+    padding-bottom: 0;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  .where {
+    display: none;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+    font-weight: 600;
+  }
+
+  .title {
+    color: var(--sl-color-white);
+    font-weight: 600;
+    line-height: calc(var(--stop-y) * 2);
+  }
+
+  .trace .call {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 0.35rem;
+    padding: 0.2rem 0.5rem;
+    overflow-x: auto;
+    border: 1px solid var(--yl-border);
+    border-radius: 0.3rem;
+    background: var(--yl-code-bg);
+    color: var(--sl-color-white);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-sm);
+    white-space: pre;
+  }
+
+  .detail {
+    margin-top: 0.4rem;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+    line-height: 1.6;
+  }
+
+  .trace .detail code {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: var(--sl-font-mono);
+    font-size: 0.92em;
+    color: var(--sl-color-white);
+  }
+
+  /* On narrow screens the lanes shrink to a path and each step names its lane. */
+  @media (max-width: 40rem) {
+    .trace {
+      --lane-w: 1.15rem;
+    }
+
+    .lanes {
+      display: none;
+    }
+
+    li {
+      column-gap: 0.85rem;
+    }
+
+    .where {
+      display: block;
+      line-height: calc(var(--stop-y) * 2);
+    }
+
+    .title {
+      line-height: 1.4;
+    }
+  }
+</style>

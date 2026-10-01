@@ -1,0 +1,114 @@
+---
+/**
+ * A source block (the default slot) wired to the places that call it. The accent wiring
+ * marks what the library derives from the source.
+ *
+ * ```mdx
+ * <CallSites sites={[{ label: "HTTP route", code: "POST /auth/signIn" }]}>
+ *   <Snippet src="../README.md" region="contract" />
+ * </CallSites>
+ * ```
+ */
+interface Props {
+  readonly sites: ReadonlyArray<{ readonly label: string; readonly code: string }>;
+}
+
+const { sites } = Astro.props;
+---
+
+<figure class="call-sites not-content">
+  <div class="source"><slot /></div>
+  <ul>
+    {
+      sites.map(({ label, code }) => (
+        <li>
+          <span class="label">{label}</span>
+          <code class="site-code">{code}</code>
+        </li>
+      ))
+    }
+  </ul>
+</figure>
+
+<style>
+  .call-sites {
+    --wire: var(--sl-color-accent);
+    --indent: 1.5rem;
+
+    margin: 1.5rem 0 0;
+  }
+
+  .source :global(.expressive-code) {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0 0 0 var(--indent);
+    list-style: none;
+  }
+
+  li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.85rem 0 0 1.75rem;
+  }
+
+  /* The bus runs down from the source; each site branches off it. */
+  li::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-left: 1.5px solid var(--wire);
+    content: "";
+  }
+
+  li::after {
+    position: absolute;
+    top: calc(0.85rem + 0.7em);
+    left: 0;
+    width: 1.25rem;
+    border-top: 1.5px solid var(--wire);
+    content: "";
+  }
+
+  li:last-child::before {
+    bottom: auto;
+    width: 1.25rem;
+    height: calc(0.85rem + 0.7em);
+    border-bottom: 1.5px solid var(--wire);
+    border-bottom-left-radius: 0.5rem;
+  }
+
+  li:last-child::after {
+    display: none;
+  }
+
+  .label {
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+  }
+
+  .call-sites .site-code {
+    padding: 0;
+    overflow-x: auto;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--sl-color-white);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-text-sm);
+    white-space: pre;
+  }
+
+  @media (max-width: 40rem) {
+    li {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.15rem;
+    }
+  }
+</style>
