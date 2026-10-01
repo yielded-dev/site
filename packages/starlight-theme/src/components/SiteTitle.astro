@@ -1,7 +1,7 @@
 ---
 import libraryId from "virtual:yielded/library";
 
-import { getLibrary, libraries } from "../libraries.ts";
+import { getLibrary, libraries, origin } from "../libraries.ts";
 import Mark from "./Mark.astro";
 
 const current = getLibrary(libraryId);
@@ -9,7 +9,7 @@ const { siteTitleHref } = Astro.locals.starlightRoute;
 ---
 
 <div class="yl-title">
-  <a class="yl-wordmark" href="/" aria-label="yielded.dev home">
+  <a class="yl-wordmark" href={origin} aria-label="yielded.dev home">
     <Mark />
     <span>yielded</span>
   </a>
@@ -28,7 +28,7 @@ const { siteTitleHref } = Astro.locals.starlightRoute;
         {
           libraries.map((library) => {
             const isCurrent = library.id === current.id;
-            const href = isCurrent ? siteTitleHref : (library.docsUrl ?? `${library.base}/`);
+            const href = isCurrent ? siteTitleHref : (library.docsUrl ?? `${origin}${library.base}/`);
             const style = `--yl-item-dark:${library.accent.dark};--yl-item-light:${library.accent.light}`;
 
             return (
