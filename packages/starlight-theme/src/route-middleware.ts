@@ -3,18 +3,26 @@ import { defineRouteMiddleware } from "@astrojs/starlight/route-data";
 import { currentGroup } from "./sidebar.ts";
 
 /**
- * Points each page's `og:image` at the card that `link-previews.ts` renders after the build.
- * A page that sets its own `og:image` in frontmatter `head` keeps it.
+ * Adds each page's `article:section` and points its `og:image` at the card that
+ * `link-previews.ts` renders after the build. A page that sets its own non-empty `og:image` in
+ * frontmatter `head` keeps it.
  */
 export const onRequest = defineRouteMiddleware(({ locals, site }) => {
   const route = locals.starlightRoute;
-  const hasImage = route.head.some(({ attrs }) => attrs?.property === "og:image");
+  const section = currentGroup(route.sidebar);
+
+  if (section !== undefined)
+    route.head.push({ tag: "meta", attrs: { property: "article:section", content: section } });
+
+  const hasImage = route.head.some(
+    ({ attrs }) =>
+      attrs?.property === "og:image" && typeof attrs.content === "string" && attrs.content !== "",
+  );
 
   if (site === undefined || hasImage) return;
 
   const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
   const { title } = route.entry.data;
-  const section = currentGroup(route.sidebar);
 
   route.head.push(
     {
@@ -34,7 +42,4 @@ export const onRequest = defineRouteMiddleware(({ locals, site }) => {
       },
     },
   );
-
-  if (section !== undefined)
-    route.head.push({ tag: "meta", attrs: { property: "article:section", content: section } });
 });

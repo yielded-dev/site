@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 
 import type { AstroIntegration } from "astro";
 
@@ -13,9 +13,10 @@ export interface LinkPreviewOptions {
 /**
  * Renders link preview images into the build output.
  *
- * Each built page whose `og:image` points inside the site gets a 1200×630 card at that URL, drawn
- * from its `og:title`, `og:description`, and `article:section`. The output root also receives
- * `apple-touch-icon.png`. Images render after the build, so the dev server does not serve them.
+ * Each built page whose `og:image` points under the site's `og/` path gets a 1200×630 card at that
+ * URL, drawn from its `og:title`, `og:description`, and `article:section`. A file the site already
+ * ships at that path is kept. The output root also receives `apple-touch-icon.png`. Images render
+ * after the build, so the dev server does not serve them.
  *
  * ```ts
  * defineConfig({ site: "https://yielded.dev", integrations: [linkPreviews()] })
@@ -60,6 +61,9 @@ export default function linkPreviews(options: LinkPreviewOptions = {}): AstroInt
 
           const target = new URL(image.slice(siteRoot.length), dir);
 
+          // An image the site ships from `public/` already exists in the output.
+          if (await exists(target)) continue;
+
           const card = {
             title,
             description: meta.get("og:description"),
@@ -77,8 +81,14 @@ export default function linkPreviews(options: LinkPreviewOptions = {}): AstroInt
   };
 }
 
+const exists = (file: URL) =>
+  access(file).then(
+    () => true,
+    () => false,
+  );
+
 const metaTag = /<meta\s[^>]*>/gi;
-const attribute = /([\w:-]+)="([^"]*)"/g;
+const attribute = /([\w:-]+)=(?:"([^"]*)"|'([^']*)')/g;
 
 // The characters Astro escapes in attribute values.
 const entities: Readonly<Record<string, string>> = {
@@ -98,7 +108,10 @@ const readMeta = (html: string): ReadonlyMap<string, string> => {
 
   for (const [tag] of html.matchAll(metaTag)) {
     const attrs = new Map(
-      Array.from(tag.matchAll(attribute), ([, name = "", value = ""]) => [name, decode(value)]),
+      Array.from(tag.matchAll(attribute), ([, name = "", double, single = ""]) => [
+        name,
+        decode(double ?? single),
+      ]),
     );
 
     const key = attrs.get("property") ?? attrs.get("name");
