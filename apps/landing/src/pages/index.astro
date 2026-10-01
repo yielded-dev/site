@@ -24,7 +24,7 @@ const themes = { dark: "tokyo-night", light: { ...tokyoNightLight, type: "light"
   <section class="hero">
     <div class="hero-copy">
       <h1>Effect libraries for sync, auth, and agents.</h1>
-      <p class="lede">TypeScript packages built on Effect 4. MIT licensed, in public beta.</p>
+      <p class="lede">TypeScript packages built on Effect. MIT licensed.</p>
       <nav class="jump" aria-label="Libraries">
         {
           libraries.map((library) => (
@@ -55,11 +55,11 @@ const themes = { dark: "tokyo-night", light: { ...tokyoNightLight, type: "light"
             <p class="library-name">
               <span class="dot" aria-hidden="true" />
               {library.name}
-              {!isLive && <span class="badge">Docs soon</span>}
+              {!isLive && <span class="badge">Coming soon</span>}
             </p>
             <h2>{library.tagline}</h2>
             <p class="description">{library.description}</p>
-            <CopyCommand command={library.install} />
+            {isLive && <CopyCommand command={library.install} />}
             <div class="links">
               {isLive ? (
                 <a class="primary" href={`${library.base}/`}>

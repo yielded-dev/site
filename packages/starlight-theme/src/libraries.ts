@@ -10,7 +10,7 @@ export interface Library {
   readonly repository: string;
   /** Install command shown on the landing page. */
   readonly install: string;
-  /** Libraries that are not published yet appear in the switcher without a link. */
+  /** Libraries that are not ready appear in the switcher without a docs link. */
   readonly status: "live" | "soon";
   /** Accent colors for dark and light themes. */
   readonly accent: { readonly dark: string; readonly light: string };
@@ -28,7 +28,7 @@ export const libraries: ReadonlyArray<Library> = [
     base: "/sync",
     repository: "https://github.com/yielded-dev/sync",
     install: "bun add @yielded/sync@beta",
-    status: "live",
+    status: "soon",
     accent: { dark: "#c6f36a", light: "#3f6b00" },
   },
   {
