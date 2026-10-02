@@ -1,6 +1,6 @@
 {
   "name": "@yielded/starlight-theme",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Shared Starlight theme, library switcher, link previews, and Markdown helpers for yielded.dev docs.",
   "keywords": [
     "astro",
