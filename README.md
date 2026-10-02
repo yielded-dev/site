@@ -1,4 +1,25 @@
-# yielded.dev
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/wordmark-paper.svg" />
+    <img src=".github/assets/wordmark-ink.svg" alt="yielded.dev" height="56" />
+  </picture>
+</h1>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@yielded/starlight-theme"><img alt="npm" src="https://img.shields.io/npm/v/@yielded/starlight-theme?label=starlight-theme&labelColor=121310&color=c6f36a" /></a>
+  <a href="https://github.com/yielded-dev/site/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/yielded-dev/site/ci.yml?branch=main&label=ci&labelColor=121310" /></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-f3f1e8?labelColor=121310" /></a>
+</p>
+
+<p align="center">
+  <a href="https://yielded.dev"><b>yielded.dev</b></a>
+  ·
+  <a href="https://yielded.dev/sync/">Sync</a>
+  ·
+  <a href="https://yielded.dev/auth/">Auth</a>
+  ·
+  <a href="https://effect-agent.com/">Agent</a>
+</p>
 
 The yielded.dev landing page and the shared Starlight theme that every library's docs use.
 
