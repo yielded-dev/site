@@ -1,5 +1,11 @@
 # @yielded/starlight-theme
 
+## 0.2.1
+
+### Patch Changes
+
+- [#16](https://github.com/yielded-dev/site/pull/16) [`552b17b`](https://github.com/yielded-dev/site/commit/552b17b346be89fd09434c538eaf66c6556eaeea) Thanks [@danieljvdm](https://github.com/danieljvdm)! - Show repository star counts in GitHub badges in the docs header and mobile menu.
+
 ## 0.2.0
 
 ### Minor Changes

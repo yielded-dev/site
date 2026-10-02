@@ -34,7 +34,7 @@
     },
     "packages/starlight-theme": {
       "name": "@yielded/starlight-theme",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@fontsource-variable/ibm-plex-sans": "^5.3.0",
         "@fontsource/ibm-plex-mono": "^5.3.0",
