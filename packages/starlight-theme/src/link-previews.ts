@@ -2,7 +2,7 @@ import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 
 import type { AstroIntegration } from "astro";
 
-import { renderCard, renderIcon } from "./card.ts";
+import { renderCard, touchIcon } from "./card.ts";
 import { getLibrary, type LibraryId } from "./libraries.ts";
 
 export interface LinkPreviewOptions {
@@ -36,7 +36,7 @@ export default function linkPreviews(options: LinkPreviewOptions = {}): AstroInt
             : new URL(config.base.replace(/\/?$/, "/"), config.site).href;
       },
       async "astro:build:done"({ dir, logger }) {
-        await writeFile(new URL("apple-touch-icon.png", dir), renderIcon());
+        await writeFile(new URL("apple-touch-icon.png", dir), touchIcon());
 
         if (siteRoot === undefined) {
           logger.warn("Link preview images need `site` in the Astro config.");

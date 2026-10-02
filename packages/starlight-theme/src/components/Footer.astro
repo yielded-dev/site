@@ -3,15 +3,14 @@
 import DefaultFooter from "@astrojs/starlight/components/Footer.astro";
 
 import { libraries, origin } from "../libraries.ts";
-import Mark from "./Mark.astro";
+import Wordmark from "./Wordmark.astro";
 ---
 
 <DefaultFooter />
 
 <div class="yl-footer">
-  <a class="yl-footer-home" href={origin}>
-    <Mark size={18} />
-    <span>yielded</span>
+  <a class="yl-footer-home" href={origin} aria-label="yielded.dev home">
+    <Wordmark />
   </a>
   <nav aria-label="Libraries">
     {
@@ -39,10 +38,8 @@ import Mark from "./Mark.astro";
   .yl-footer-home {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     color: var(--sl-color-white);
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    font-size: var(--sl-text-base);
     text-decoration: none;
   }
 
