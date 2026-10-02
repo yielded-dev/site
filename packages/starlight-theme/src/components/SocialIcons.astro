@@ -142,7 +142,7 @@ const links = (config.social ?? []).map((link) => {
 
   .yl-github-badge,
   :global(#starlight__sidebar) .yl-github-badge {
-    gap: 0.625rem;
+    gap: 0.5rem;
     margin: 0;
     padding: 0.4rem 0.625rem;
     border: 1px solid var(--yl-border-strong);
@@ -165,17 +165,14 @@ const links = (config.social ?? []).map((link) => {
   .yl-github-stars {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding-inline-start: 0.625rem;
-    border-inline-start: 1px solid var(--yl-border-strong);
+    gap: 0.25rem;
     font-family: var(--yl-font-mono);
     font-size: 0.75rem;
     line-height: 1.25;
     white-space: nowrap;
   }
 
-  [data-yl-github-count] {
-    min-width: 4ch;
-    text-align: end;
+  :global(header.header .social-icons:has(.yl-github-badge)::after) {
+    content: none;
   }
 </style>
