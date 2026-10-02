@@ -4,12 +4,12 @@ The yielded.dev landing page and the shared Starlight theme that every library's
 
 Each library owns its docs in its own repository:
 
-| Path                | Source                       | Deploys with          |
-| ------------------- | ---------------------------- | --------------------- |
-| `yielded.dev/`      | `apps/landing` (this repo)   | Alchemy static site   |
-| `yielded.dev/sync/` | `yielded-dev/sync` → `docs/` | Wrangler Worker route |
-| `yielded.dev/auth/` | `yielded-dev/auth` → `docs/` | Alchemy static site   |
-| `effect-agent.com`  | `effect-agent` → `docs/`     | Separate deployment   |
+| Path                 | Source                        | Deploys with          |
+| -------------------- | ----------------------------- | --------------------- |
+| `yielded.dev/`       | `apps/landing` (this repo)    | Alchemy static site   |
+| `yielded.dev/sync/`  | `yielded-dev/sync` → `docs/`  | Wrangler Worker route |
+| `yielded.dev/auth/`  | `yielded-dev/auth` → `docs/`  | Alchemy static site   |
+| `yielded.dev/agent/` | `yielded-dev/agent` → `docs/` | Alchemy static site   |
 
 Cloudflare picks the most specific Worker route, so each library's `yielded.dev/<lib>*` route
 wins over the landing page's `yielded.dev/*`.
