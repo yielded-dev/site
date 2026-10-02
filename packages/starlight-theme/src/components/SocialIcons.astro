@@ -1,0 +1,181 @@
+---
+import { Icon } from "@astrojs/starlight/components";
+import config from "virtual:starlight/user-config";
+
+const links = (config.social ?? []).map((link) => {
+  const url = new URL(link.href);
+
+  const repository =
+    link.icon === "github" &&
+    url.hostname === "github.com" &&
+    /^\/[^/]+\/[^/]+\/?$/.test(url.pathname)
+      ? url.pathname.replace(/\/$/, "")
+      : undefined;
+
+  return { ...link, repository };
+});
+---
+
+{
+  links.map(({ label, href, icon, repository }) => (
+    <a
+      href={href}
+      rel="me"
+      class:list={["yl-social-link", { "yl-github-badge": repository }]}
+      aria-label={label}
+      title={label}
+      data-yl-github-repository={repository}
+      data-yl-github-label={repository ? label : undefined}
+    >
+      <Icon name={icon} size="1.125rem" />
+      {repository && (
+        <span class="yl-github-stars" aria-hidden="true">
+          <Icon name="star" size="0.875rem" />
+          <span data-yl-github-count>Star</span>
+        </span>
+      )}
+    </a>
+  ))
+}
+
+<script>
+  const cacheDuration = 60 * 60 * 1000;
+  const requests = new Map<string, Promise<number | undefined>>();
+
+  const compactCount = new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+
+  async function loadStars(repository: string): Promise<number | undefined> {
+    const cacheKey = `yl-github-stars:${repository}`;
+
+    try {
+      const cached: { count?: unknown; expires?: unknown } | null = JSON.parse(
+        sessionStorage.getItem(cacheKey) ?? "null",
+      );
+
+      if (
+        typeof cached?.count === "number" &&
+        Number.isSafeInteger(cached.count) &&
+        cached.count >= 0 &&
+        typeof cached.expires === "number" &&
+        cached.expires > Date.now()
+      ) {
+        return cached.count;
+      }
+    } catch {
+      // The badge also works when browser storage is unavailable.
+    }
+
+    try {
+      const response = await fetch(`https://api.github.com/repos${repository}`, {
+        headers: { Accept: "application/vnd.github+json" },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!response.ok) return undefined;
+
+      const data: { stargazers_count?: unknown } = await response.json();
+      const count = data.stargazers_count;
+
+      if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0) {
+        return undefined;
+      }
+
+      try {
+        sessionStorage.setItem(
+          cacheKey,
+          JSON.stringify({ count, expires: Date.now() + cacheDuration }),
+        );
+      } catch {
+        // Storage is optional; a fresh count can still be displayed.
+      }
+
+      return count;
+    } catch {
+      // Keep the Star link usable during outages or GitHub rate limiting.
+      return undefined;
+    }
+  }
+
+  for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-yl-github-repository]")) {
+    const repository = link.dataset.ylGithubRepository;
+
+    if (!repository) continue;
+
+    let request = requests.get(repository);
+
+    if (!request) {
+      request = loadStars(repository);
+      requests.set(repository, request);
+    }
+
+    request.then((count) => {
+      const counter = link.querySelector("[data-yl-github-count]");
+
+      if (count === undefined || !counter) return;
+
+      counter.textContent = compactCount.format(count);
+
+      const label = `${link.dataset.ylGithubLabel} (${count.toLocaleString("en")} ${count === 1 ? "star" : "stars"})`;
+
+      link.setAttribute("aria-label", label);
+      link.title = label;
+    });
+  }
+</script>
+
+<style>
+  .yl-social-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--sl-color-text-accent);
+    padding: 0.5rem;
+    margin: -0.5rem;
+    text-decoration: none;
+  }
+
+  .yl-social-link:hover {
+    color: var(--sl-color-white);
+  }
+
+  .yl-github-badge,
+  :global(#starlight__sidebar) .yl-github-badge {
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0.4rem 0.625rem;
+    border: 1px solid var(--yl-border-strong);
+    border-radius: 999px;
+    background: var(--yl-bg-raised);
+    color: var(--sl-color-gray-2);
+  }
+
+  .yl-github-badge:hover,
+  :global(#starlight__sidebar) .yl-github-badge:hover {
+    border-color: var(--yl-text-faint);
+    color: var(--sl-color-white);
+  }
+
+  .yl-github-badge:focus-visible {
+    outline: 2px solid var(--yl-accent);
+    outline-offset: 3px;
+  }
+
+  .yl-github-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-inline-start: 0.625rem;
+    border-inline-start: 1px solid var(--yl-border-strong);
+    font-family: var(--yl-font-mono);
+    font-size: 0.75rem;
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+
+  [data-yl-github-count] {
+    min-width: 4ch;
+    text-align: end;
+  }
+</style>

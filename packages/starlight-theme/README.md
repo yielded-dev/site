@@ -25,6 +25,10 @@ export default defineConfig({
 The plugin sets the library's accent color, the GitHub social link, and an edit link to
 `<repository>/edit/main/docs/` unless you configure them yourself.
 
+GitHub repository links in the header and mobile menu include a star-count badge.
+Counts load from GitHub in the browser and are cached for one hour per session;
+the badge displays “Star” when the count is unavailable.
+
 ## Link previews
 
 `astro build` renders a 1200×630 card for every page at `og/<page>.png` and an
