@@ -1,5 +1,11 @@
 # @yielded/starlight-theme
 
+## 0.2.2
+
+### Patch Changes
+
+- [#19](https://github.com/yielded-dev/site/pull/19) [`d81510e`](https://github.com/yielded-dev/site/commit/d81510eee4834efd4f727fb4d2b1eaa6debb88ee) Thanks [@danieljvdm](https://github.com/danieljvdm)! - Point Agent documentation and repository links to Yielded and use `@yielded/agent` in the install command.
+
 ## 0.2.1
 
 ### Patch Changes
