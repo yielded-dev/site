@@ -1,0 +1,26 @@
+---
+/**
+ * The yielded wordmark in `currentColor`, sized by the surrounding font size: the mark sets the y
+ * and the rest is IBM Plex Sans SemiBold. Its baseline sits on the text baseline, so it lines up
+ * with neighboring text whether the container aligns by baseline or by center.
+ * `assets/wordmark.svg` is copied from the brand repository's generated assets.
+ */
+import source from "../../assets/wordmark.svg?raw";
+
+const [, width = "0", height = "0"] = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(source) ?? [];
+const d = /\sd="([^"]+)"/.exec(source)?.[1];
+---
+
+<svg class="yl-wordmark-art" viewBox={`0 0 ${width} ${height}`} width={width} height={height} aria-hidden="true">
+  <path fill="currentColor" d={d}></path>
+</svg>
+
+<style>
+  /* Set at a 100-unit font size, the wordmark is 113.3 units tall with 31.2 below the baseline. */
+  .yl-wordmark-art {
+    flex: none;
+    width: auto;
+    height: 1.133em;
+    margin-bottom: -0.312em;
+  }
+</style>

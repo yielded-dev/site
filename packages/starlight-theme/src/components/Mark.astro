@@ -1,19 +1,28 @@
 ---
-/** The yielded mark: `yield*`'s asterisk in a rounded square. */
+/**
+ * The yielded mark: a y whose stem grows out of `yield*`'s asterisk, in `currentColor`.
+ * `assets/mark.svg` is copied from the brand repository's generated assets.
+ */
+import source from "../../assets/mark.svg?raw";
+
 interface Props {
+  /** Height in pixels. */
   readonly size?: number;
 }
 
 const { size = 22 } = Astro.props;
+const [, width = "0", height = "0"] = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(source) ?? [];
+const d = /\sd="([^"]+)"/.exec(source)?.[1];
 ---
 
-<svg class="yl-mark" viewBox="0 0 32 32" width={size} height={size} aria-hidden="true">
-  <rect width="32" height="32" rx="8" fill="var(--yl-text)"></rect>
-  <g stroke="var(--yl-bg)" stroke-width="3.2" stroke-linecap="round">
-    <path d="M16 8.5v15"></path>
-    <path d="m9.5 12.25 13 7.5"></path>
-    <path d="m22.5 12.25-13 7.5"></path>
-  </g>
+<svg
+  class="yl-mark"
+  viewBox={`0 0 ${width} ${height}`}
+  width={Math.round(((size * Number(width)) / Number(height)) * 100) / 100}
+  height={size}
+  aria-hidden="true"
+>
+  <path fill="currentColor" d={d}></path>
 </svg>
 
 <style>

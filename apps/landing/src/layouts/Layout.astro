@@ -1,7 +1,7 @@
 ---
 import "@yielded/starlight-theme/tokens.css";
 
-import Mark from "@yielded/starlight-theme/components/Mark.astro";
+import Wordmark from "@yielded/starlight-theme/components/Wordmark.astro";
 import { libraries } from "@yielded/starlight-theme/libraries";
 
 interface Props {
@@ -48,8 +48,7 @@ const image = new URL(`/og/${Astro.url.pathname.replace(/^\/|\/$/g, "") || "inde
   <body>
     <header class="bar">
       <a class="wordmark" href="/" aria-label="yielded.dev home">
-        <Mark size={24} />
-        <span>yielded</span>
+        <Wordmark />
       </a>
       <nav aria-label="Primary">
         {
@@ -174,10 +173,7 @@ const image = new URL(`/og/${Astro.url.pathname.replace(/^\/|\/$/g, "") || "inde
   .wordmark {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-    font-weight: 600;
-    font-size: 1.125rem;
-    letter-spacing: -0.03em;
+    font-size: 1.25rem;
     text-decoration: none;
   }
 

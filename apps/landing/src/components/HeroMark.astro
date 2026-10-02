@@ -1,22 +1,31 @@
 ---
-/** The yielded asterisk at display size, one stroke per library, drawn in on load. */
-import { libraries } from "@yielded/starlight-theme/libraries";
+/**
+ * The yielded mark at display size, drawn in on load: the y's stem, its arm, then the star's points.
+ * The strokes are the brand repository's source geometry (`src/mark.ts`) on its 100-unit grid.
+ */
+const letter = 12;
+const star = 10;
 
-// Stroke order matches the mark: vertical, then the two diagonals.
 const strokes = [
-  { d: "M100 22v156", library: libraries[0] },
-  { d: "m32.5 61 135 78", library: libraries[1] },
-  { d: "m167.5 61-135 78", library: libraries[2] },
+  { d: "M66 27 L44 79 Q38.5 92 26 92", width: letter, delay: 0, duration: 820 },
+  { d: "M27.5 37 L46.962 72", width: letter, delay: 360, duration: 520 },
+  ...["L52.052 25.796", "L62.835 13.363", "L77.992 19.775", "L76.577 36.172"].map((end, index) => ({
+    d: `M66 27 ${end}`,
+    width: star,
+    delay: 760 + index * 70,
+    duration: 340,
+  })),
 ];
 ---
 
-<svg class="hero-mark" viewBox="0 0 200 200" aria-hidden="true">
+<svg class="hero-mark" viewBox="4.5 6.2 94 94" aria-hidden="true">
   {
-    strokes.map(({ d, library }, index) => (
+    strokes.map(({ d, width, delay, duration }) => (
       <path
         d={d}
         pathLength="1"
-        style={`--dark:${library?.accent.dark};--light:${library?.accent.light};--delay:${index * 140}ms`}
+        stroke-width={width}
+        style={`--delay:${delay}ms;--duration:${duration}ms`}
       />
     ))
   }
@@ -31,20 +40,12 @@ const strokes = [
 
   path {
     fill: none;
-    stroke: var(--dark);
-    stroke-width: 26;
+    stroke: var(--yl-text);
     stroke-linecap: round;
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
     opacity: 0;
-    animation: draw 900ms cubic-bezier(0.65, 0, 0.35, 1) var(--delay) forwards;
-    mix-blend-mode: screen;
-  }
-
-  /* The light-theme accents are darkened for text contrast; the mark keeps the bright ones. */
-  :global([data-theme="light"]) path {
-    stroke: color-mix(in srgb, var(--dark) 88%, black);
-    mix-blend-mode: multiply;
+    animation: draw var(--duration) cubic-bezier(0.65, 0, 0.35, 1) var(--delay) forwards;
   }
 
   /* Opacity hides the round cap that would otherwise show as a dot before each stroke starts. */
