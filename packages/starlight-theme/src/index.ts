@@ -50,6 +50,7 @@ export default function yieldedTheme(options: YieldedThemeOptions): StarlightPlu
           ],
           components: {
             SiteTitle: resolve("./components/SiteTitle.astro"),
+            SocialIcons: resolve("./components/SocialIcons.astro"),
             Hero: resolve("./components/Hero.astro"),
             PageTitle: resolve("./components/PageTitle.astro"),
             Footer: resolve("./components/Footer.astro"),
