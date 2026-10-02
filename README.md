@@ -14,8 +14,6 @@
 <p align="center">
   <a href="https://yielded.dev"><b>yielded.dev</b></a>
   ·
-  <a href="https://yielded.dev/sync/">Sync</a>
-  ·
   <a href="https://yielded.dev/auth/">Auth</a>
   ·
   <a href="https://effect-agent.com/">Agent</a>
