@@ -3,7 +3,7 @@
 
 declare module "virtual:yielded/library" {
   // Mirrors `LibraryId` in libraries.ts; ambient modules cannot import relative files.
-  const library: "sync" | "auth" | "agent";
+  const library: "agent" | "auth" | "sync";
 
   export default library;
   /** Absolute path of the docs project root, which `<Snippet src>` paths resolve from. */
