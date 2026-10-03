@@ -1,4 +1,4 @@
-export type LibraryId = "sync" | "auth" | "agent";
+export type LibraryId = "agent" | "auth" | "sync";
 
 export interface Library {
   readonly id: LibraryId;
@@ -22,16 +22,17 @@ export const origin = "https://yielded.dev";
 
 export const libraries: ReadonlyArray<Library> = [
   {
-    id: "sync",
-    name: "Sync",
-    tagline: "Realtime state, with receipts.",
+    id: "agent",
+    name: "Agent",
+    tagline: "Build TypeScript agents with Effect and Effect AI.",
     description:
-      "Effect-native contracts, an authoritative server, and scoped clients that keep the same command identity through retries.",
-    base: "/sync",
-    repository: "https://github.com/yielded-dev/sync",
-    install: "bun add @yielded/sync@beta",
-    status: "soon",
-    accent: { dark: "#c6f36a", light: "#3f6b00" },
+      "Define inputs, outputs, and tools with schemas. Yielded Agent runs the loop, executes tools, and validates the result, with typed errors, streaming, and bounded execution.",
+    base: "/agent",
+    docsUrl: "https://yielded.dev/agent/",
+    repository: "https://github.com/yielded-dev/agent",
+    install: "bun add @yielded/agent@beta",
+    status: "live",
+    accent: { dark: "#b9a4ff", light: "#5b3fd1" },
   },
   {
     id: "auth",
@@ -46,17 +47,16 @@ export const libraries: ReadonlyArray<Library> = [
     accent: { dark: "#ffb45e", light: "#9a4a00" },
   },
   {
-    id: "agent",
-    name: "Agent",
-    tagline: "Build TypeScript agents with Effect and Effect AI.",
+    id: "sync",
+    name: "Sync",
+    tagline: "Realtime state, with receipts.",
     description:
-      "Define inputs, outputs, and tools with schemas. Yielded Agent runs the loop, executes tools, and validates the result, with typed errors, streaming, and bounded execution.",
-    base: "/agent",
-    docsUrl: "https://yielded.dev/agent/",
-    repository: "https://github.com/yielded-dev/agent",
-    install: "bun add @yielded/agent@beta",
-    status: "live",
-    accent: { dark: "#b9a4ff", light: "#5b3fd1" },
+      "Effect-native contracts, an authoritative server, and scoped clients that keep the same command identity through retries.",
+    base: "/sync",
+    repository: "https://github.com/yielded-dev/sync",
+    install: "bun add @yielded/sync@beta",
+    status: "soon",
+    accent: { dark: "#c6f36a", light: "#3f6b00" },
   },
 ];
 
