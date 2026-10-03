@@ -110,6 +110,9 @@ export default defineConfig({
       scripts: true,
     },
     tasks: {
+      "ci:format": {
+        command: "vp fmt --check",
+      },
       deploy: {
         cache: false,
         command: "alchemy deploy",

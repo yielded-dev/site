@@ -1,15 +1,19 @@
+# Keep the required workflow on every PR; select expensive work inside it.
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+    # Retargeting changes the diff without changing the head commit.
+    types: [opened, reopened, synchronize, ready_for_review, edited]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # Complete main baselines; supersede older runs only on the same PR.
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -18,29 +22,118 @@ env:
   ASTRO_TELEMETRY_DISABLED: "1"
 
 jobs:
+  changes:
+    name: Select required checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      pull-requests: read
+    outputs:
+      full: ${{ steps.paths.outputs.full }}
+    steps:
+      - name: Classify the complete PR diff
+        id: paths
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea9 # v7
+        with:
+          retries: 2
+          script: |
+            const pr = context.payload.pull_request;
+            // Main warms complete task results. Release metadata still needs
+            // package builds and consumer validation.
+            let full = !pr || (pr.base.ref === 'main' &&
+              pr.head.ref === 'changeset-release/main' &&
+              pr.head.repo?.full_name === context.repo.owner + '/' + context.repo.repo);
+            if (!full) {
+              try {
+                const files = await github.paginate(github.rest.pulls.listFiles, {
+                  ...context.repo, pull_number: pr.number, per_page: 100,
+                });
+                const { data: current } = await github.rest.pulls.get({
+                  ...context.repo, pull_number: pr.number,
+                });
+                // The API caps its file listing. Incomplete or moved diffs must
+                // never authorize skips, including renames out of source paths.
+                if (!files.length || files.length !== current.changed_files ||
+                    current.head.sha !== pr.head.sha || current.base.sha !== pr.base.sha) {
+                  full = true;
+                } else {
+                  const passive = /^(?:[^/]+\.md|LICENSE|docs\/.*\.md|(?:packages|apps)\/[^/]+\/(?:README|CHANGELOG)\.md|\.changeset\/[^/]+\.md)$/;
+                  for (const file of files) {
+                    for (const path of [file.filename, file.previous_filename].filter(Boolean)) {
+                      // Changes to the commands or setup that run CI exercise
+                      // the full gate. Other workflows get actionlint below.
+                      if (path === '.github/workflows/ci.yml' || path.startsWith('.github/actions/')) {
+                        full = true;
+                      } else if (passive.test(path) || /^(?:\.agents|\.claude|\.opencode)\//.test(path) ||
+                          /^\.github\/(?:workflows\/[^/]+\.ya?ml|assets\/.*|[^/]+\.md)$/.test(path)) {
+                        continue;
+                      } else {
+                        // Unknown paths are executable inputs until classified.
+                        full = true;
+                      }
+                    }
+                  }
+                }
+              } catch (error) {
+                core.warning(`Cannot prove a limited diff; running full CI: ${error.message}`);
+                full = true;
+              }
+            }
+            core.setOutput('full', String(full));
+            await core.summary.addRaw(full ? 'Full static checks and landing build required.' :
+              'Formatting and workflow validation required.').write();
+
   ready:
     name: ready
+    needs: changes
+    if: ${{ always() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
+      - name: Require a complete path selection
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          FULL: ${{ needs.changes.outputs.full }}
+        run: |
+          test "$CHANGES_RESULT" = success
+          case "$FULL" in
+            true|false) ;;
+            *) exit 1 ;;
+          esac
+
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - name: Set up CI
+        id: setup
+        uses: ./.github/actions/setup-ci
         with:
-          node-version: "24"
+          task-cache: ci
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - name: Validate GitHub Actions workflows
+        uses: docker://rhysd/actionlint:1.7.12
         with:
-          bun-version: 1.4.2
+          args: -color -shellcheck= -pyflakes=
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Check formatting for a limited diff
+        id: format
+        if: needs.changes.outputs.full != 'true'
+        uses: ./.github/actions/run-ci
+        with:
+          timeout: 2m
+          command: vp run ci:format
 
-      - name: Patch Effect TypeScript-Go
-        run: ./node_modules/.bin/vp run patch:tsgo
+      - name: Check and build the theme and landing page
+        id: ready
+        if: needs.changes.outputs.full == 'true'
+        uses: ./.github/actions/run-ci
+        with:
+          timeout: 5m
+          command: vp run -v ready
 
-      - name: Check and build
-        run: ./node_modules/.bin/vp run ready
+      - name: Save Vite Task cache
+        if: ${{ !cancelled() && (steps.ready.outcome == 'success' || steps.ready.outcome == 'failure' || steps.format.outcome == 'success') }}
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.setup.outputs.cache-key }}

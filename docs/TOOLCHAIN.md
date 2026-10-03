@@ -24,6 +24,18 @@ lint with type-aware rules, each workspace's `typecheck`, the root config typech
 and the landing build. Astro validates `.astro` files during the build; `tsc` checks
 the TypeScript sources.
 
+Every pull request reports the required `ready` check. Contributor docs, changesets,
+and auxiliary workflows need formatting and workflow validation. Theme and landing
+source, dependencies, CI setup, unknown paths, release PRs, and pushes to `main`
+run the full gate. Renames and incomplete diffs conservatively select the full gate.
+
+CI uses Vite+ for installation and commands, caches package downloads, and restores
+successful Vite Task results after installation. Vite validates each task's inputs
+before reuse; Astro outputs include both the site and generated types. Successful
+tasks remain cached after a later failure. Timed-out commands restart once, and
+dependency/compiler setup can also retry one failed attempt. Repeated failures
+still fail `ready`.
+
 ### Working on the theme against a docs site
 
 The sync and auth `docs/` workspaces depend on `@yielded/starlight-theme`. To try
