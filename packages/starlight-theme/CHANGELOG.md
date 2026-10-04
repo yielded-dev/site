@@ -1,5 +1,15 @@
 # @yielded/starlight-theme
 
+## 0.3.0
+
+### Minor Changes
+
+- [#18](https://github.com/yielded-dev/site/pull/18) [`7637382`](https://github.com/yielded-dev/site/commit/76373826b1c48e867eab9953bc6dc414d67a76b7) Thanks [@danieljvdm](https://github.com/danieljvdm)! - Use the new yielded mark: a y whose stem grows out of an asterisk. The docs header and footer show the new `Wordmark` component, `Mark` draws the new mark, and link preview cards, the Apple touch icon, and the exported favicon use them.
+
+### Patch Changes
+
+- [#23](https://github.com/yielded-dev/site/pull/23) [`0bac7d2`](https://github.com/yielded-dev/site/commit/0bac7d234037eebd5078f0374978747659de5060) Thanks [@danieljvdm](https://github.com/danieljvdm)! - List libraries as Agent, Auth, then Sync in the docs switcher and footer.
+
 ## 0.2.2
 
 ### Patch Changes
