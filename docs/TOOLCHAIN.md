@@ -29,6 +29,10 @@ and auxiliary workflows need formatting and workflow validation. Theme and landi
 source, dependencies, CI setup, unknown paths, release PRs, and pushes to `main`
 run the full gate. Renames and incomplete diffs conservatively select the full gate.
 
+Opening, reopening, updating, marking ready, or retargeting a PR runs CI. Title and
+description edits create only a skipped run; they do not cancel active CI or replace
+its required `ready` result.
+
 CI uses Vite+ for installation and commands, caches package downloads, and restores
 successful Vite Task results after installation. Vite validates each task's inputs
 before reuse; Astro outputs include both the site and generated types. Successful
