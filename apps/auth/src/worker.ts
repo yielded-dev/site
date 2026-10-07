@@ -1,6 +1,13 @@
 import * as SqliteClient from "@effect/sql-sqlite-do/SqliteClient";
-import { Effect, Layer, Schema } from "effect";
-import { HttpMiddleware, HttpRouter, HttpServer } from "effect/http";
+import * as Cloudflare from "alchemy/Cloudflare";
+import { Config, Effect, Layer, Schema } from "effect";
+import {
+  HttpMiddleware,
+  HttpRouter,
+  HttpServer,
+  HttpServerError,
+  HttpServerResponse,
+} from "effect/http";
 
 import { settingsApplication } from "./application";
 import { CryptoLive } from "./crypto";
@@ -31,34 +38,29 @@ const Configuration = Schema.Struct({
   AUTH_IDENTITY_KEYS: IdentityKeyMaterial,
 });
 
-type Environment = typeof Configuration.Encoded & {
-  readonly ASSETS: Fetcher;
-  readonly AUTH: DurableObjectNamespace;
-};
-
 class HostedAuthUnavailable extends Schema.TaggedError<HostedAuthUnavailable>()(
   "HostedAuthUnavailable",
   {},
 ) {}
 
-/** One SQL transaction owner for login identities, session validity and grants.
- * Keep the binding, class and instance name unchanged across deployments.
- */
-export class HostedAuth {
-  constructor(
-    private readonly state: DurableObjectState,
-    private readonly env: Environment,
-  ) {}
+const unavailable = HttpServerResponse.text(
+  "Sign-in is temporarily unavailable. Start a new attempt later.",
+  { status: 503, headers: { "cache-control": "no-store" } },
+);
 
-  fetch(request: Request): Promise<Response> {
-    return Effect.runPromise(
-      Effect.gen({ self: this }, function* () {
-        const config = yield* Schema.decodeEffect(Configuration)(this.env, {
+/** The request scope owns the SQL layer and its one transaction owner. */
+const hostedAuth = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
+  Effect.map(Cloudflare.DurableObjectState, (state) =>
+    Effect.succeed({
+      fetch: Effect.gen(function* () {
+        const assets: Fetcher = env.ASSETS;
+
+        const config = yield* Schema.decodeUnknownEffect(Configuration)(env, {
           reportInput: false,
         });
 
         const response = yield* Effect.tryPromise({
-          try: () => this.env.ASSETS.fetch(`${config.AUTH_ORIGIN}/oauth-settings.html`),
+          try: () => assets.fetch(`${config.AUTH_ORIGIN}/oauth-settings.html`),
           catch: () => HostedAuthUnavailable.make({}),
         });
 
@@ -75,77 +77,116 @@ export class HostedAuth {
 
         if (stylesheet === undefined) return yield* HostedAuthUnavailable.make({});
 
-        const application = settingsApplication({
-          origin: new URL(config.AUTH_ORIGIN),
-          clientId: config.GITHUB_CLIENT_ID,
-          clientSecret: config.GITHUB_CLIENT_SECRET,
-          externalSubject: config.GITHUB_USER_ID,
-          displayName: config.YIELDED_DISPLAY_NAME,
-          stylesheet,
-          agent: {
-            origin: new URL(config.YIELDED_AGENT_ORIGIN),
-            secret: config.YIELDED_AGENT_CLIENT_SECRET,
-            keys: config.AUTH_IDENTITY_KEYS,
-          },
-        }).pipe(
-          Layer.provide(settingsKeysLayer(config.AUTH_SETTINGS_KEYS)),
-          Layer.provide(SqliteClient.layer({ storage: this.state.storage })),
-          Layer.provide(CryptoLive),
-          Layer.provide(HttpServer.layerServices),
-          Layer.provide(Layer.succeed(HttpMiddleware.TracerDisabledWhen, () => true)),
-        );
-
-        const web = yield* Effect.acquireRelease(
-          Effect.sync(() => HttpRouter.toWebHandler(application, { disableLogger: true })),
-          (web) => Effect.promise(() => web.dispose()),
-        );
-
-        const result = yield* Effect.tryPromise({
-          try: () => web.handler(request),
-          catch: () => HostedAuthUnavailable.make({}),
-        });
-
-        const body = yield* Effect.tryPromise({
-          try: () => result.arrayBuffer(),
-          catch: () => HostedAuthUnavailable.make({}),
-        });
-
-        return new Response(body, { status: result.status, headers: result.headers });
-      }).pipe(
-        Effect.scoped,
-        Effect.catch(() =>
-          Effect.succeed(
-            new Response("Sign-in is temporarily unavailable. Start a new attempt later.", {
-              status: 503,
-              headers: { "cache-control": "no-store" },
-            }),
+        return yield* HttpRouter.toHttpEffect(
+          settingsApplication({
+            origin: new URL(config.AUTH_ORIGIN),
+            clientId: config.GITHUB_CLIENT_ID,
+            clientSecret: config.GITHUB_CLIENT_SECRET,
+            externalSubject: config.GITHUB_USER_ID,
+            displayName: config.YIELDED_DISPLAY_NAME,
+            stylesheet,
+            agent: {
+              origin: new URL(config.YIELDED_AGENT_ORIGIN),
+              secret: config.YIELDED_AGENT_CLIENT_SECRET,
+              keys: config.AUTH_IDENTITY_KEYS,
+            },
+          }).pipe(
+            Layer.provide(settingsKeysLayer(config.AUTH_SETTINGS_KEYS)),
+            Layer.provide(SqliteClient.layer({ storage: state.raw.storage })),
+            Layer.provide(CryptoLive),
+            Layer.provide(HttpServer.layerServices),
+            Layer.provide(Layer.succeed(HttpMiddleware.TracerDisabledWhen, () => true)),
           ),
+        );
+      }).pipe(
+        Effect.orElseSucceed(() => Effect.succeed(unavailable)),
+        Effect.flatten,
+        Effect.mapError((reason) =>
+          HttpServerError.isHttpServerError(reason)
+            ? reason
+            : new HttpServerError.HttpServerError({ reason }),
         ),
       ),
-    );
-  }
-}
+    }),
+  ),
+);
 
-export default {
-  async fetch(request: Request, env: Environment): Promise<Response> {
-    const url = new URL(request.url);
-
-    if (url.origin !== env.AUTH_ORIGIN) return new Response("Not found", { status: 404 });
-    if (url.pathname === "/") return Response.redirect(`${url.origin}/oauth-settings`, 303);
-    if (["/oauth-settings", "/oauth-settings/callback", "/sign-in"].includes(url.pathname)) {
-      if (request.method !== "GET") return new Response(null, { status: 405 });
-      // Static asset lookups never carry provider callback parameters.
-      const page = await env.ASSETS.fetch(`${url.origin}/oauth-settings.html`);
-      const headers = new Headers(page.headers);
-
-      headers.set("cache-control", "no-store");
-      headers.set("referrer-policy", "no-referrer");
-
-      return new Response(page.body, { status: page.status, headers });
-    }
-    if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/brand/"))
-      return env.ASSETS.fetch(request);
-
-    return env.AUTH.getByName("yielded-auth-v1").fetch(request);
+export default class Auth extends Cloudflare.Worker<Auth>()(
+  "Auth",
+  {
+    name: "yielded-auth",
+    main: import.meta.url,
+    compatibility: { date: "2026-07-01", flags: ["nodejs_compat"] },
+    domain: { name: "auth.yielded.dev", zoneName: "yielded.dev" },
+    workersDev: { enabled: false, previewsEnabled: false },
+    assets: { directory: "./dist", runWorkerFirst: true },
+    env: {
+      AUTH: Cloudflare.DurableObject("AuthV1", { className: "HostedAuth" }),
+      AUTH_ORIGIN: "https://auth.yielded.dev",
+      GITHUB_CLIENT_ID: Config.NonEmptyString("GITHUB_CLIENT_ID"),
+      GITHUB_CLIENT_SECRET: Config.Redacted("GITHUB_CLIENT_SECRET"),
+      GITHUB_USER_ID: Config.NonEmptyString("GITHUB_USER_ID"),
+      YIELDED_DISPLAY_NAME: Config.NonEmptyString("YIELDED_DISPLAY_NAME"),
+      YIELDED_AGENT_ORIGIN: "https://agent.yielded.dev",
+      YIELDED_AGENT_CLIENT_SECRET: Config.Redacted("YIELDED_AGENT_CLIENT_SECRET"),
+      AUTH_SETTINGS_KEYS: Config.Redacted("AUTH_SETTINGS_KEYS"),
+      AUTH_IDENTITY_KEYS: Config.Redacted("AUTH_IDENTITY_KEYS"),
+    },
+    observability: {
+      enabled: false,
+      logs: { enabled: false, invocationLogs: false },
+      traces: { enabled: false },
+    },
+    logpush: false,
   },
-};
+  Effect.gen(function* () {
+    // Keep the deployed AUTH binding and HostedAuth class paired. The class-form
+    // DurableObject constructor would allocate a binding named HostedAuth instead.
+    yield* (yield* Cloudflare.Worker).export("HostedAuth", {
+      kind: "durableObject",
+      constructor: yield* hostedAuth,
+      services: yield* Effect.context(),
+    } satisfies Cloudflare.DurableObjectExport);
+
+    return {
+      fetch: Effect.gen(function* () {
+        const request = yield* Cloudflare.Request;
+        const env = yield* Cloudflare.WorkerEnvironment;
+        const assets: Fetcher = env.ASSETS;
+        const auth: DurableObjectNamespace = env.AUTH;
+        const origin = yield* Schema.decodeEffect(Origin)(env.AUTH_ORIGIN, { reportInput: false });
+        const url = new URL(request.url);
+
+        if (url.origin !== origin) return HttpServerResponse.text("Not found", { status: 404 });
+        if (url.pathname === "/")
+          return HttpServerResponse.redirect(`${origin}/oauth-settings`, { status: 303 });
+        if (["/oauth-settings", "/oauth-settings/callback", "/sign-in"].includes(url.pathname)) {
+          if (request.method !== "GET") return HttpServerResponse.empty({ status: 405 });
+
+          // Static asset lookups never carry provider callback parameters.
+          const page = yield* Effect.tryPromise({
+            try: () => assets.fetch(`${origin}/oauth-settings.html`),
+            catch: () => HostedAuthUnavailable.make({}),
+          });
+
+          return HttpServerResponse.fromWeb(page).pipe(
+            HttpServerResponse.setHeaders({
+              "cache-control": "no-store",
+              "referrer-policy": "no-referrer",
+            }),
+          );
+        }
+
+        const response = yield* Effect.tryPromise({
+          try: () =>
+            url.pathname.startsWith("/assets/") || url.pathname.startsWith("/brand/")
+              ? assets.fetch(request)
+              : auth.getByName("yielded-auth-v1").fetch(request),
+          catch: () => HostedAuthUnavailable.make({}),
+        });
+
+        return HttpServerResponse.fromWeb(response);
+      }).pipe(Effect.orElseSucceed(() => unavailable)),
+    };
+  }),
+) {}

@@ -4,7 +4,8 @@ The application behind `auth.yielded.dev`. GitHub authenticates the shared Yield
 account; registered applications exchange an OpenID code and create their own
 sessions. [application.ts](src/application.ts) composes public `@yielded/auth`
 services, application policy, SQL storage and consent. Effect Atom owns the browser
-workflows. React renders and dispatches.
+workflows. React renders and dispatches. [worker.ts](src/worker.ts) declares the
+Alchemy Worker and Durable Object runtime; each request scope owns its SQL services.
 
 This host provisions one configured GitHub owner and registers Yielded Agent.
 Account settings list, link and remove login identities. Provider tokens remain
