@@ -70,6 +70,11 @@ const server = Layer.unwrap(
       ...(["/oauth-settings", "/oauth-settings/callback", "/sign-in"] as const).map((route) =>
         HttpRouter.add("GET", route, page),
       ),
+      HttpRouter.add(
+        "GET",
+        "/favicon.svg",
+        HttpServerResponse.file(path.join(root, "favicon.svg")),
+      ),
       ...(["ink", "paper"] as const).map((mode) =>
         HttpRouter.add(
           "GET",

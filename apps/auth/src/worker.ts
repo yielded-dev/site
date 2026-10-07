@@ -179,7 +179,9 @@ export default class Auth extends Cloudflare.Worker<Auth>()(
 
         const response = yield* Effect.tryPromise({
           try: () =>
-            url.pathname.startsWith("/assets/") || url.pathname.startsWith("/brand/")
+            url.pathname === "/favicon.svg" ||
+            url.pathname.startsWith("/assets/") ||
+            url.pathname.startsWith("/brand/")
               ? assets.fetch(request)
               : auth.getByName("yielded-auth-v1").fetch(request),
           catch: () => HostedAuthUnavailable.make({}),
