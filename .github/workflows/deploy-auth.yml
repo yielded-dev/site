@@ -1,0 +1,58 @@
+name: Deploy auth
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/auth/**"
+      - ".dependencies/auth"
+      - ".gitmodules"
+      - ".github/workflows/deploy-auth.yml"
+      - ".github/actions/**"
+      - "bun.lock"
+      - "package.json"
+      - "tsconfig.base.json"
+      - "vite.config.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-yielded-auth-production
+  cancel-in-progress: false
+
+env:
+  CI: "true"
+  VP_GIT_HOOKS: "0"
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.AUTH_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository and pinned Auth library
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - name: Set up CI
+        uses: ./.github/actions/setup-ci
+
+      - name: Check application
+        run: vp -C apps/auth run typecheck
+
+      - name: Deploy existing Auth Worker
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GITHUB_CLIENT_ID: ${{ vars.AUTH_GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.AUTH_GITHUB_CLIENT_SECRET }}
+          GITHUB_USER_ID: ${{ vars.AUTH_GITHUB_USER_ID }}
+          YIELDED_DISPLAY_NAME: ${{ vars.AUTH_DISPLAY_NAME }}
+          YIELDED_AGENT_CLIENT_SECRET: ${{ secrets.AUTH_AGENT_CLIENT_SECRET }}
+          AUTH_SETTINGS_KEYS: ${{ secrets.AUTH_SETTINGS_KEYS }}
+          AUTH_IDENTITY_KEYS: ${{ secrets.AUTH_IDENTITY_KEYS }}
+        run: vp -C apps/auth run deploy --yes

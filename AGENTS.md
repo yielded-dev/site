@@ -1,8 +1,8 @@
 # Repository guidance
 
 Read `README.md` and `docs/TOOLCHAIN.md` before changing repository structure or
-tooling. This repository holds the yielded.dev landing page and
-`@yielded/starlight-theme`, the Starlight plugin every library's docs use. Docs
+tooling. This repository holds the yielded.dev landing page, the hosted sign-in service,
+and `@yielded/starlight-theme`, the Starlight plugin every library's docs use. Docs
 content lives in each library's own repository. Keep documentation independent of
 issue trackers and ticket identifiers.
 
@@ -46,11 +46,19 @@ and explicit compiler setup.
 - Landing snippets in `apps/landing/src/snippets` are verbatim copies of library
   examples; update them when the source examples change.
 
+- `apps/auth` owns `auth.yielded.dev`, its account policy, keys and independent
+  Worker deployment. Keep the deployed Worker, Durable Object, SQL identities and
+  cookie names stable. Reusable authentication code belongs in `yielded-dev/auth`;
+  never patch the pinned `.dependencies/auth` checkout here.
+
 ## Effect
 
-Only `alchemy.run.ts` uses Effect. Before editing it, read
+The hosted auth app and Alchemy compositions use Effect. Before editing them, read
 `node_modules/effect/AGENTS.md` completely and follow its relevant links. Use
 `.agents/skills/effect-development` for focused guidance.
+
+Effect Atom owns auth queries, mutations, shared state and workflows; React renders
+and dispatches. Keep multi-step flows in atoms and credentials out of browser state.
 
 ## Testing policy
 

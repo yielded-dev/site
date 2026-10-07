@@ -19,16 +19,17 @@
   <a href="https://effect-agent.com/">Agent</a>
 </p>
 
-The yielded.dev landing page and the shared Starlight theme that every library's docs use.
+The yielded.dev landing page, hosted Yielded sign-in service, and shared Starlight theme.
 
 Each library owns its docs in its own repository:
 
-| Path                 | Source                        | Deploys with          |
-| -------------------- | ----------------------------- | --------------------- |
-| `yielded.dev/`       | `apps/landing` (this repo)    | Alchemy static site   |
-| `yielded.dev/sync/`  | `yielded-dev/sync` → `docs/`  | Wrangler Worker route |
-| `yielded.dev/auth/`  | `yielded-dev/auth` → `docs/`  | Alchemy static site   |
-| `yielded.dev/agent/` | `yielded-dev/agent` → `docs/` | Alchemy static site   |
+| Path                 | Source                        | Deploys with               |
+| -------------------- | ----------------------------- | -------------------------- |
+| `auth.yielded.dev`   | `apps/auth` (this repo)       | Independent Alchemy Worker |
+| `yielded.dev/`       | `apps/landing` (this repo)    | Alchemy static site        |
+| `yielded.dev/sync/`  | `yielded-dev/sync` → `docs/`  | Wrangler Worker route      |
+| `yielded.dev/auth/`  | `yielded-dev/auth` → `docs/`  | Alchemy static site        |
+| `yielded.dev/agent/` | `yielded-dev/agent` → `docs/` | Alchemy static site        |
 
 Cloudflare picks the most specific Worker route, so each library's `yielded.dev/<lib>*` route
 wins over the landing page's `yielded.dev/*`.
@@ -37,6 +38,7 @@ wins over the landing page's `yielded.dev/*`.
 
 - `packages/starlight-theme` — `@yielded/starlight-theme`, a Starlight plugin with the shared
   design tokens, library switcher, link preview images, and Markdown helpers. See its README.
+- [`apps/auth`](apps/auth) — GitHub sign-in, account settings and OpenID identity for Yielded apps.
 - `apps/landing` — the static landing page. It uses the theme's tokens and library registry.
 - `scripts/migrate-vitepress.ts` — one-off converter for moving a VitePress docs folder to
   Starlight (titles, callouts, code titles).
@@ -56,11 +58,17 @@ The landing page and shared navigation use it instead of the yielded.dev path.
 ## Commands
 
 ```sh
+git submodule update --init
 vp install
 vp run patch:tsgo
 vp run dev     # landing page
 vp run ready   # format, lint, typecheck, and build
 ```
+
+The auth library is temporarily pinned as a Git submodule until its OpenID APIs
+are released. It remains owned and published by `yielded-dev/auth`; this repo
+consumes its public package exports. See [`apps/auth`](apps/auth) for configuration
+and independent deployment.
 
 See [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md) for developing the theme against a docs site,
 releasing it, and deploying the landing page.

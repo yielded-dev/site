@@ -1,0 +1,3 @@
+[submodule ".dependencies/auth"]
+	path = .dependencies/auth
+	url = https://github.com/yielded-dev/auth.git

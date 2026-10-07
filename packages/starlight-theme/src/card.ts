@@ -56,6 +56,7 @@ type Style = Readonly<Record<string, string | number>>;
 type Child = Element | string | false | undefined;
 
 interface Element {
+  readonly key: null;
   readonly type: string;
   readonly props: {
     readonly style?: Style;
@@ -67,6 +68,7 @@ interface Element {
 // Satori lays out every element as flex unless told otherwise, and counts an array as several
 // children, which a block element (needed for lineClamp) rejects.
 const div = (style: Style, ...children: ReadonlyArray<Child>): Element => ({
+  key: null,
   type: "div",
   props: {
     style: { display: "flex", ...style },
@@ -75,6 +77,7 @@ const div = (style: Style, ...children: ReadonlyArray<Child>): Element => ({
 });
 
 const svg = (style: Style, markup: string): Element => ({
+  key: null,
   type: "img",
   props: { style, src: `data:image/svg+xml,${encodeURIComponent(markup)}` },
 });

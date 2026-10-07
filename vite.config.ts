@@ -82,6 +82,7 @@ const generatedPaths = [
   ...toolIgnorePatterns,
   "**/dist/**",
   "**/.astro/**",
+  ".dependencies/**",
   "packages/starlight-theme/src/code-themes/**",
 ];
 
