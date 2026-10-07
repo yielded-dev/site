@@ -29,41 +29,12 @@ export class YieldedKeys extends Context.Service<YieldedKeys, typeof IdentityKey
       const filename = path.join(directory, "yielded-identity-keys.json");
 
       if (!(yield* fs.exists(filename))) {
-        const pair = yield* Effect.tryPromise({
-          try: () =>
-            crypto.subtle.generateKey(
-              {
-                name: "RSASSA-PKCS1-v1_5",
-                modulusLength: 2048,
-                publicExponent: new Uint8Array([1, 0, 1]),
-                hash: "SHA-256",
-              },
-              true,
-              ["sign", "verify"],
-            ),
-          catch: () => OAuthServer.ConfigurationError.make({}),
-        });
-
-        const exportKey = (key: CryptoKey) =>
-          Effect.tryPromise({
-            try: () => crypto.subtle.exportKey("jwk", key),
-            catch: () => OAuthServer.ConfigurationError.make({}),
-          });
-
-        const privateKey = yield* Schema.decodeUnknownEffect(Jwk.PrivateJwk)(
-          { ...(yield* exportKey(pair.privateKey)), kid: "v1", use: "sig" },
-          { reportInput: false },
+        const pair = yield* Jwk.generateKeyPair({ algorithm: "RS256", kid: "v1" }).pipe(
+          Effect.mapError(() => OAuthServer.ConfigurationError.make({})),
         );
 
-        const publicKey = yield* Schema.decodeUnknownEffect(Jwk.PublicJwk)({
-          ...(yield* exportKey(pair.publicKey)),
-          kid: "v1",
-          use: "sig",
-        });
-
         const encoded = yield* Schema.encodeEffect(IdentityKeyMaterial)({
-          privateKey: Redacted.make(privateKey),
-          publicKey,
+          ...pair,
           consent: Redacted.make(Base64Url.encode(yield* entropy.randomBytes(32))),
         });
 

@@ -108,8 +108,8 @@ provided by this host.
 
 ## Library dependency
 
-The OpenID APIs are currently in [Auth PR #167](https://github.com/yielded-dev/auth/pull/167).
-`.dependencies/auth` pins that repository as a Git submodule. Its five runtime
-packages resolve through their public exports; no library implementation is copied
+The app consumes Auth's public packages through a pinned Git submodule until the
+required APIs are published. The five runtime packages under `.dependencies/auth`
+resolve through their public exports; no library implementation is copied
 or patched here. Site's release configuration excludes them. Once those APIs are
 published, replace the source workspaces with the published dependencies.

@@ -5,7 +5,7 @@ import { eq } from "@yielded/auth-persistence/OAuthPersistence";
 import * as OAuth from "@yielded/auth/OAuth";
 import { SubjectId } from "@yielded/auth/Schema";
 import * as Sessions from "@yielded/auth/Sessions";
-import { Context, Effect, Schema } from "effect";
+import { Context, Crypto, Effect, Schema } from "effect";
 import { Base64Url } from "effect/encoding";
 import { SqlClient } from "effect/sql";
 
@@ -365,16 +365,18 @@ export const identityKey = Effect.fn("OAuthStorage.identityKey")(function* (
     offset += 4 + value.length;
   }
 
-  const digest = yield* Effect.tryPromise({
-    try: () => globalThis.crypto.subtle.digest("SHA-256", packed),
-    catch: () =>
+  const crypto = yield* Crypto.Crypto;
+
+  const digest = yield* crypto.digest("SHA-256", packed).pipe(
+    Effect.mapError(() =>
       PersistenceMappingError.make({
         operation: "oauth-storage.identity",
         cause: undefined,
       }),
-  });
+    ),
+  );
 
-  return "v1:" + Base64Url.encode(new Uint8Array(digest));
+  return "v1:" + Base64Url.encode(digest);
 });
 
 /** App-owned allowlist and explicit Effect SQL storage for OAuth sign-in.
