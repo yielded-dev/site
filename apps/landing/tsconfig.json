@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["astro.config.ts"]
+  "include": ["astro.config.ts", "worker.ts"]
 }
