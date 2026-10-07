@@ -2,9 +2,9 @@
 
 The application behind `auth.yielded.dev`. GitHub authenticates the shared Yielded
 account; registered applications exchange an OpenID code and create their own
-sessions. [application.ts](src/application.ts) composes public `@yielded/auth`
+sessions. [application.ts](src/server/application.ts) composes public `@yielded/auth`
 services, application policy, SQL storage and consent. Effect Atom owns the browser
-workflows. React renders and dispatches. [worker.ts](src/worker.ts) declares the
+workflows. React renders and dispatches. [worker.ts](src/server/worker.ts) declares the
 Alchemy Worker and Durable Object runtime; each request scope owns its SQL services.
 
 This host provisions one configured GitHub owner and registers Yielded Agent.
@@ -12,6 +12,18 @@ Account settings list, link and remove login identities. Provider tokens remain
 private and are not retained as API grants. Recent authentication authorizes
 account changes; unlink invalidates Auth sessions and cannot remove the last
 usable sign-in method. Provisioning runs once and never restores removed links.
+
+## Source layout
+
+- `src/client/` — browser entry (`main.tsx`), React UI, Atom queries and workflows
+  (`atoms.ts`), and styles.
+- `src/server/` — authentication policy, provider configuration, persistence, keys
+  and server-rendered consent. `worker.ts` is the Alchemy runtime; `local.ts` starts
+  the local Bun server. `application.ts` composes their services.
+- `src/shared/contract.ts` — the browser-safe HTTP contract consumed by both sides.
+
+Client and server depend on the shared contract; shared code imports neither side.
+`public/` contains static assets. Build and deployment configuration stay at the app root.
 
 ## Development
 
@@ -69,7 +81,7 @@ vp -C apps/auth run deploy --yes
 Provide `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, the GitHub variables,
 `YIELDED_DISPLAY_NAME`, `YIELDED_AGENT_CLIENT_SECRET`, and the secret JSON bindings
 `AUTH_SETTINGS_KEYS` and `AUTH_IDENTITY_KEYS`. Their schemas live in
-[keys.ts](src/keys.ts) and [identity-keys.ts](src/identity-keys.ts). Reuse the existing
+[keys.ts](src/server/keys.ts) and [identity-keys.ts](src/server/identity-keys.ts). Reuse the existing
 production keys when changing code or repository; local startup keys do not replace
 them. Never place secret values in browser build variables or command arguments.
 

@@ -1,9 +1,19 @@
-import { Atom as AuthAtom, Client, OAuth } from "@yielded/auth";
+import { Atom as AuthAtom, Client, OAuth, Operations } from "@yielded/auth";
 import { DateTime, Effect, Redacted, Schema } from "effect";
 import { KeyValueStore } from "effect/persistence";
 import { Atom } from "effect/reactivity";
 
-import { Attempt, CallbackExpired, SettingsApi } from "./contract";
+import { SettingsApi } from "../shared/contract";
+
+// Only public attempt metadata survives a redirect; no code, state, or bearer.
+const Attempt = Schema.Struct({
+  kind: Schema.Literals(["sign-in", "link"]),
+  callbackId: Schema.Literals(["github", "github-select"]),
+  flowId: Operations.RequestBindingFlowId,
+  expiresAtMillis: Schema.Int,
+});
+
+export class CallbackExpired extends Schema.TaggedError<CallbackExpired>()("CallbackExpired", {}) {}
 
 const factory = Atom.context();
 const runtime = factory(KeyValueStore.layerStorage(() => sessionStorage));

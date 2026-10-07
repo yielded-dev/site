@@ -32,7 +32,7 @@ const server = Layer.unwrap(
 
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    const root = new URL("../dist/", import.meta.url).pathname;
+    const root = new URL("../../dist/", import.meta.url).pathname;
     const html = yield* fs.readFileString(path.join(root, "oauth-settings.html"));
     const assets = yield* fs.readDirectory(path.join(root, "assets"));
 
@@ -80,7 +80,7 @@ const server = Layer.unwrap(
           "GET",
           `/brand/auth-${mode}.svg`,
           HttpServerResponse.file(
-            new URL(`../public/brand/auth-${mode}.svg`, import.meta.url).pathname,
+            new URL(`../../public/brand/auth-${mode}.svg`, import.meta.url).pathname,
           ),
         ),
       ),

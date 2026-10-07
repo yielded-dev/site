@@ -4,7 +4,7 @@ export default defineConfig({
   build: { rolldownOptions: { input: "oauth-settings.html" } },
   run: {
     tasks: {
-      start: { command: "vp build && bun src/server.ts", cache: false },
+      start: { command: "vp build && bun src/server/local.ts", cache: false },
       plan: {
         command: "vp build && vp exec alchemy plan alchemy.run.ts --stage production",
         cache: false,

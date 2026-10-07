@@ -2,7 +2,7 @@ import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 
-import Auth from "./src/worker";
+import Auth from "./src/server/worker";
 
 export default Alchemy.Stack(
   "yielded-auth",

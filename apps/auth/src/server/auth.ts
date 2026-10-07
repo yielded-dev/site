@@ -1,7 +1,7 @@
 import { Auth, Hooks, OAuth, Sessions } from "@yielded/auth";
 import { Effect, Layer, Option, Schema } from "effect";
 
-import { SettingsApi } from "./contract";
+import { SettingsApi } from "../shared/contract";
 import { requirement } from "./sql";
 
 export const moduleId = "browser/oauth-settings";

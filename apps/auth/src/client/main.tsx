@@ -7,9 +7,9 @@ import { AtomRegistry, type AsyncResult } from "effect/reactivity";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { Brand } from "./brand";
 import {
   auth,
+  CallbackExpired,
   begin,
   initialize,
   continueSignIn,
@@ -19,8 +19,8 @@ import {
   signOut,
   sharedSignIn,
   unlink,
-} from "./client";
-import { CallbackExpired } from "./contract";
+} from "./atoms";
+import { Brand } from "./brand";
 
 import "./style.css";
 

@@ -8,7 +8,7 @@ export const DatabaseLive = Layer.unwrap(
     const path = yield* Path.Path;
 
     const directory = yield* Config.String("AUTH_DATA_DIR").pipe(
-      Config.withDefault(new URL("../.data/", import.meta.url).pathname),
+      Config.withDefault(new URL("../../.data/", import.meta.url).pathname),
     );
 
     yield* fs.makeDirectory(directory, { recursive: true, mode: 0o700 });
