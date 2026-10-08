@@ -15,7 +15,7 @@ catalog is the source of truth for exact shared versions.
 
 ## Development
 
-Run `vp install` and `vp run patch:tsgo`. The prepare hook installs `.vite-hooks`;
+Run `vp install`. The prepare hook patches the compiler and installs `.vite-hooks`;
 the pre-commit hook runs Vite+ checks on staged TypeScript and JavaScript.
 `vp run dev` serves the landing page. `vp run ready` is the handoff gate: formatting,
 lint with type-aware rules, each workspace's `typecheck`, the root config typecheck,

@@ -59,7 +59,6 @@ The landing page and shared navigation use it instead of the yielded.dev path.
 
 ```sh
 vp install
-vp run patch:tsgo
 vp run dev     # landing page
 vp run ready   # format, lint, typecheck, and build
 ```
