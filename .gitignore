@@ -14,3 +14,5 @@ dist
 .dev-kit
 .repos
 .alchemy
+
+**/.data/

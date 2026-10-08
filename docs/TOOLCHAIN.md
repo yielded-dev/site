@@ -4,24 +4,22 @@ This repository follows the Yielded Bun workspace and Vite+ conventions used by
 `yielded-dev/sync`, `yielded-dev/auth`, and Effect Agent. The root `package.json`
 catalog is the source of truth for exact shared versions.
 
-| Tool                 | Version         |
-| -------------------- | --------------- |
-| Bun                  | `1.4.2`         |
-| Vite+                | `0.3.3`         |
-| TypeScript           | `7.0.2`         |
-| Effect TypeScript-Go | `0.45.0`        |
-| Astro                | `7.3.5`         |
-| Starlight            | `0.42.4`        |
-| Alchemy              | `2.0.0-beta.79` |
-| Effect               | `4.0.0-rc.117`  |
+| Tool       | Version         |
+| ---------- | --------------- |
+| Bun        | `1.4.2`         |
+| Vite+      | `0.3.3`         |
+| TypeScript | `7.0.2`         |
+| Astro      | `7.3.5`         |
+| Starlight  | `0.42.4`        |
+| Alchemy    | `2.0.0-beta.80` |
 
 ## Development
 
-Run `vp install`, then `vp run patch:tsgo`. The prepare hook installs `.vite-hooks`;
+Run `vp install` and `vp run patch:tsgo`. The prepare hook installs `.vite-hooks`;
 the pre-commit hook runs Vite+ checks on staged TypeScript and JavaScript.
 `vp run dev` serves the landing page. `vp run ready` is the handoff gate: formatting,
 lint with type-aware rules, each workspace's `typecheck`, the root config typecheck,
-and the landing build. Astro validates `.astro` files during the build; `tsc` checks
+and the theme, landing and auth app builds. Astro validates `.astro` files during the build; `tsc` checks
 the TypeScript sources.
 
 Every pull request reports the required `ready` check. Contributor docs, changesets,
@@ -126,3 +124,14 @@ Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, then run
 to deploy. The `Deploy` workflow runs on relevant changes to `main` when the
 repository variable `DEPLOY_ENABLED` is `true`, using the same values as repository
 secrets.
+
+## Hosted sign-in
+
+[`apps/auth`](../apps/auth) owns the independent `yielded-auth` stack at stage
+`production`. Its `plan` and `deploy` tasks retain the existing Worker, Durable
+Object and custom domain. `Deploy auth` has separate triggers, concurrency and
+secret bindings from the landing page. See the app README for configuration.
+
+The app consumes published Auth packages pinned in the root catalog. Wait for
+the owning library release before updating these versions, then run `vp install`
+and `vp run ready`. Site does not build, version or publish the library packages.
