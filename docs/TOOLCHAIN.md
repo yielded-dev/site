@@ -27,9 +27,9 @@ and auxiliary workflows need formatting and workflow validation. Theme and landi
 source, dependencies, CI setup, unknown paths, release PRs, and pushes to `main`
 run the full gate. Renames and incomplete diffs conservatively select the full gate.
 
-Opening, reopening, updating, marking ready, or retargeting a PR runs CI. Title and
-description edits create only a skipped run; they do not cancel active CI or replace
-its required `ready` result.
+Opening, reopening, updating, or marking a PR ready runs CI. Title and description
+edits do not start a run. After retargeting a PR, close and reopen it to validate
+the new base before merging.
 
 CI uses Vite+ for installation and commands, caches package downloads, and restores
 successful Vite Task results after installation. Vite validates each task's inputs
