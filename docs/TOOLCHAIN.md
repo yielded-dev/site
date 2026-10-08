@@ -15,8 +15,7 @@ catalog is the source of truth for exact shared versions.
 
 ## Development
 
-Initialize the pinned Auth source with `git submodule update --init`, then run
-`vp install` and `vp run patch:tsgo`. The prepare hook installs `.vite-hooks`;
+Run `vp install` and `vp run patch:tsgo`. The prepare hook installs `.vite-hooks`;
 the pre-commit hook runs Vite+ checks on staged TypeScript and JavaScript.
 `vp run dev` serves the landing page. `vp run ready` is the handoff gate: formatting,
 lint with type-aware rules, each workspace's `typecheck`, the root config typecheck,
@@ -133,8 +132,6 @@ secrets.
 Object and custom domain. `Deploy auth` has separate triggers, concurrency and
 secret bindings from the landing page. See the app README for configuration.
 
-`.dependencies/auth` pins the unreleased public Auth APIs. Only its five runtime
-packages join the workspace for resolution; Site does not build, version or
-publish them. Update the pin only after verification in the owning Auth PR. Once
-a release contains those APIs, use the published packages and remove the pin, its
-workspace entries and Changesets ignores.
+The app consumes published Auth packages pinned in the root catalog. Wait for
+the owning library release before updating these versions, then run `vp install`
+and `vp run ready`. Site does not build, version or publish the library packages.

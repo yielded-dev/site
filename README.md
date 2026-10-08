@@ -58,17 +58,15 @@ The landing page and shared navigation use it instead of the yielded.dev path.
 ## Commands
 
 ```sh
-git submodule update --init
 vp install
 vp run patch:tsgo
 vp run dev     # landing page
 vp run ready   # format, lint, typecheck, and build
 ```
 
-The auth library is temporarily pinned as a Git submodule until its OpenID APIs
-are released. It remains owned and published by `yielded-dev/auth`; this repo
-consumes its public package exports. See [`apps/auth`](apps/auth) for configuration
-and independent deployment.
+The auth app consumes published `@yielded/auth`, persistence, crypto and JOSE
+packages. The root catalog pins their versions. See [`apps/auth`](apps/auth) for
+configuration and independent deployment.
 
 See [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md) for developing the theme against a docs site,
 releasing it, and deploying the landing page.

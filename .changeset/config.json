@@ -16,11 +16,5 @@
     "tag": false
   },
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@yielded/auth",
-    "@yielded/auth-persistence",
-    "@yielded/crypto",
-    "@yielded/jose",
-    "@yielded/oauth"
-  ]
+  "ignore": []
 }

@@ -49,7 +49,7 @@ and explicit compiler setup.
 - `apps/auth` owns `auth.yielded.dev`, its account policy, keys and independent
   Worker deployment. Keep the deployed Worker, Durable Object, SQL identities and
   cookie names stable. Reusable authentication code belongs in `yielded-dev/auth`;
-  never patch the pinned `.dependencies/auth` checkout here.
+  consume its published packages and make library changes in that repository.
 
 ## Effect
 

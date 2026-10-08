@@ -30,7 +30,6 @@ Client and server depend on the shared contract; shared code imports neither sid
 From the repository root:
 
 ```sh
-git submodule update --init
 vp install
 vp run patch:tsgo
 AUTH_DATA_DIR=/tmp/yielded-site-auth vp -C apps/auth run start
@@ -108,8 +107,7 @@ provided by this host.
 
 ## Library dependency
 
-The app consumes Auth's public packages through a pinned Git submodule until the
-required APIs are published. The five runtime packages under `.dependencies/auth`
-resolve through their public exports; no library implementation is copied
-or patched here. Site's release configuration excludes them. Once those APIs are
-published, replace the source workspaces with the published dependencies.
+The app consumes published `@yielded/auth`, `@yielded/auth-persistence`,
+`@yielded/crypto` and `@yielded/jose` packages. The root catalog pins their versions;
+`bun.lock` records the resolved release artifacts. Library changes are implemented
+and released in `yielded-dev/auth` before Site updates its dependencies.

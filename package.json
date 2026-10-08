@@ -4,12 +4,7 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "apps/*",
-    ".dependencies/auth/packages/auth",
-    ".dependencies/auth/packages/auth-persistence",
-    ".dependencies/auth/packages/crypto",
-    ".dependencies/auth/packages/jose",
-    ".dependencies/auth/packages/oauth"
+    "apps/*"
   ],
   "type": "module",
   "scripts": {
@@ -20,7 +15,7 @@
     "ci:version": "bun x changeset version && bun install",
     "dev": "vp run @yielded/landing#dev",
     "check": "vp check && vp run -r --concurrency-limit 1 typecheck && tsc --noEmit -p tsconfig.json",
-    "build": "vp run -F './apps/*' -F './packages/*' build",
+    "build": "vp run -r build",
     "ready": "vp run check && vp run build",
     "release": "vp run ready && bun x changeset publish"
   },
@@ -40,8 +35,7 @@
     "vite-plus": "catalog:"
   },
   "overrides": {
-    "scheduler": "0.27.0",
-    "vitest": "catalog:"
+    "scheduler": "0.27.0"
   },
   "engines": {
     "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
@@ -69,10 +63,9 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.2.4",
     "@cloudflare/workers-types": "5.20260926.1",
-    "@effect/vitest": "4.0.0",
-    "@effect/sql-libsql": "4.0.0",
-    "@effect/sql-sqlite-node": "4.0.0",
-    "jose": "6.2.12",
-    "vitest": "4.1.11"
+    "@yielded/auth": "0.1.0-beta.30",
+    "@yielded/auth-persistence": "0.1.0-beta.30",
+    "@yielded/crypto": "0.1.0-beta.30",
+    "@yielded/jose": "0.1.0-beta.30"
   }
 }
