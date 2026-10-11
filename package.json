@@ -20,16 +20,16 @@
     "release": "vp run ready && bun x changeset publish"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "0.7.0",
-    "@changesets/cli": "2.31.0",
+    "@changesets/changelog-github": "1.0.1",
+    "@changesets/cli": "3.0.3",
     "@effect/platform-node": "catalog:",
     "@effect/tsgo": "catalog:",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "catalog:",
     "alchemy": "catalog:",
     "effect": "catalog:",
-    "oxfmt": "0.68.0",
-    "oxlint": "1.83.0",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
