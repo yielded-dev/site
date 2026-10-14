@@ -71,7 +71,7 @@ automation; it requires a current regression or an explicit human request.
 ## Skills and pull requests
 
 Use [design-ui](.agents/skills/design-ui/SKILL.md) for visual work. Use
-[open-pull-request](.agents/skills/open-pull-request/SKILL.md) for concise PR
+[pull-requests](.agents/skills/pull-requests/SKILL.md) for concise PR
 descriptions; include screenshots for visual changes. Opening a PR does not
 authorize merging it.
 
@@ -79,6 +79,12 @@ Contributor skills in `.agents/skills` are repository tooling, not runtime modul
 Dev Kit copies record their source in `.dev-kit-origin.json`. Update them explicitly with
 the transient Dev Kit CLI when requested; the repository does not depend on Dev Kit
 for installation, checks, builds, or CI.
+
+Keep shared skills identical to their published source. Put repository-specific
+commands, gates, and constraints in this file or its linked guidance. Preserve
+checked-in skills for fresh checkouts and cloud agents. Personal fallbacks use
+distinct names and explicit invocation; do not rely on scope to merge or override
+same-named skills.
 
 ## Worktree startup
 
