@@ -7,10 +7,17 @@
     <meta name="theme-color" content="#fbfbf9" />
     <meta name="theme-color" content="#121310" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <title>OAuth account settings · Yielded Auth</title>
+    <title>Your account · Yielded Auth</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="auth-transition" aria-busy="true">
+        <div role="status">
+          <h1>Signing you in</h1>
+          <p>You’ll return to the app automatically.</p>
+        </div>
+      </main>
+    </div>
     <script type="module" src="/src/client/main.tsx"></script>
   </body>
 </html>

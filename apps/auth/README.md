@@ -51,13 +51,14 @@ Supply these server-side environment variables through your secret manager:
 Register `${AUTH_ORIGIN}/oauth-settings/callback` in the GitHub app. Retain any
 callbacks used by Agent's direct GitHub sign-in. Auth registers OpenID client
 `yielded-agent` with the exact callback
-`${YIELDED_AGENT_ORIGIN}/travel/auth/yielded/callback`; Agent supplies the matching
+`${YIELDED_AGENT_ORIGIN}/auth/yielded/callback`; Agent supplies the matching
 secret as `AUTH_YIELDED_CLIENT_SECRET` and uses `AUTH_ORIGIN` as issuer.
 
 Open `/oauth-settings` to manage identities, or start at Agent's **Continue with
 Yielded** button. `/sign-in` automatically starts GitHub when a fresh authentication
 is required. An existing Auth session meeting Agent's age requirement returns
-directly. Explicit account selection and additional permissions retain consent.
+directly. Automatic handoffs show “Signing you in” until navigation. Explicit
+account selection and additional permissions retain consent.
 Only Agent's exact callback and `openid profile` scopes are preapproved.
 
 Local development uses SQLite and creates private session, transaction, binding,

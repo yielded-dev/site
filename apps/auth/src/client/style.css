@@ -80,7 +80,7 @@ button:disabled {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-main {
+main:not(.auth-transition) {
   width: min(100% - 48px, 1200px);
   min-height: 100dvh;
   margin: auto;
@@ -526,7 +526,7 @@ footer a:hover {
   padding-bottom: 32px;
 }
 @media (max-width: 720px) {
-  main {
+  main:not(.auth-transition) {
     width: calc(100% - 32px);
   }
   .workspace {
@@ -552,5 +552,39 @@ footer a:hover {
   }
   .intro {
     margin: 32px 0 24px;
+  }
+}
+
+.auth-transition {
+  box-sizing: border-box;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #fbfbf9;
+  color: #15161a;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  text-align: center;
+}
+.auth-transition h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.auth-transition p {
+  margin: 0;
+  color: #4f535e;
+  font-size: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  .auth-transition {
+    background: #121310;
+    color: #f3f1e8;
+  }
+  .auth-transition p {
+    color: #b3b5aa;
   }
 }

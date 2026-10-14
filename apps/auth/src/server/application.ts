@@ -67,7 +67,7 @@ export const settingsApplication = (config: SettingsConfiguration) => {
             {
               clientId: "yielded-agent",
               name: "Yielded Agent",
-              redirectUris: [`${agent.origin.origin}/travel/auth/yielded/callback`],
+              redirectUris: [`${agent.origin.origin}/auth/yielded/callback`],
               clientSecret: agent.secret,
               grantTypes: ["authorization_code"],
             },
@@ -82,7 +82,7 @@ export const settingsApplication = (config: SettingsConfiguration) => {
               approved: ({ clientId, redirectUri, scopes }) =>
                 Effect.succeed(
                   clientId === "yielded-agent" &&
-                    redirectUri === `${agent.origin.origin}/travel/auth/yielded/callback` &&
+                    redirectUri === `${agent.origin.origin}/auth/yielded/callback` &&
                     scopes.every((scope) => scope === "openid" || scope === "profile"),
                 ),
             }),

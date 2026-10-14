@@ -4,7 +4,7 @@ import { RegistryContext, useAtom, useAtomValue } from "@effect/atom-react";
 import { Identity, OAuth, Operations } from "@yielded/auth";
 import { Cause, Schema } from "effect";
 import { AtomRegistry, type AsyncResult } from "effect/reactivity";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 
 import {
@@ -16,6 +16,7 @@ import {
   cursor,
   linkedAccounts,
   notice,
+  redirecting,
   signOut,
   sharedSignIn,
   unlink,
@@ -46,6 +47,45 @@ function Failure({ result }: { readonly result: AsyncResult.AsyncResult<unknown,
   );
 }
 
+function Page({ compact, children }: { readonly compact: boolean; readonly children: ReactNode }) {
+  return (
+    <main className={compact ? "login-page" : "account-page"}>
+      <header>
+        <Brand href="/oauth-settings" />
+        <a className="login-back" href="https://yielded.dev/auth/">
+          About Yielded Auth ↗
+        </a>
+      </header>
+      <div className={compact ? "login-content" : "account-content"}>{children}</div>
+      <footer>
+        <p>Your Yielded account. Each app keeps its own session.</p>
+        <a href="https://yielded.dev/auth/guide/examples/">Explore the examples ↗</a>
+      </footer>
+    </main>
+  );
+}
+
+function App() {
+  const initialization = useAtomValue(initialize);
+  const starting = useAtomValue(begin);
+  const navigating = useAtomValue(redirecting);
+
+  // Automatic handoffs do not need session or account queries. Mount settings
+  // only when the workflow has settled and the user has something to do.
+  if (initialization.waiting || starting.waiting || navigating) {
+    return (
+      <main className="auth-transition" aria-busy="true">
+        <div role="status">
+          <h1>Signing you in</h1>
+          <p>You’ll return to the app automatically.</p>
+        </div>
+      </main>
+    );
+  }
+
+  return <Settings />;
+}
+
 function Settings() {
   const session = useAtomValue(auth.session);
   const [beginResult, start] = useAtom(begin);
@@ -55,92 +95,76 @@ function Settings() {
   const signingIn = useAtomValue(sharedSignIn);
   const [, proceed] = useAtom(continueSignIn);
   const signedIn = session._tag === "Success" ? session.value : null;
-  const busy = beginResult.waiting || completion.waiting || outResult.waiting;
+  const busy = outResult.waiting;
 
   const compact = signingIn || !signedIn;
 
   return (
-    <main className={compact ? "login-page" : "account-page"}>
-      <header>
-        <Brand href="/oauth-settings" />
-        <a className="login-back" href="https://yielded.dev/auth/">
-          About Yielded Auth ↗
-        </a>
-      </header>
-      <div className={compact ? "login-content" : "account-content"}>
-        <section className={compact ? "panel login-card" : "intro"}>
-          <p className="eyebrow">auth.yielded.dev{signingIn ? "/sign-in" : "/oauth-settings"}</p>
-          <h1>
-            {busy ? "Signing you in" : signingIn ? "Your Yielded account" : "Your sign-in methods"}
-          </h1>
-          <p className="description">
-            {busy
-              ? "One moment. You’ll be on your way shortly."
-              : signingIn
-                ? "One account for Yielded. Continue with GitHub to sign in."
-                : "Link an identity you control. Keep a way back into your account."}
+    <Page compact={compact}>
+      <section className={compact ? "panel login-card" : "intro"}>
+        <p className="eyebrow">auth.yielded.dev{signingIn ? "/sign-in" : "/oauth-settings"}</p>
+        <h1>{signingIn ? "Your Yielded account" : "Your sign-in methods"}</h1>
+        <p className="description">
+          {signingIn
+            ? "One account for Yielded. Continue with GitHub to sign in."
+            : "Link an identity you control. Keep a way back into your account."}
+        </p>
+        {message && (
+          <p className="notice success" role="status">
+            {message}
           </p>
-          {message && (
-            <p className="notice success" role="status">
-              {message}
-            </p>
-          )}
-          <Failure result={completion} />
-          <Failure result={beginResult} />
-          <Failure result={outResult} />
-          <Failure result={session} />
-          {compact &&
-            (session._tag === "Initial" || session.waiting || busy ? (
-              <p className="hint" role="status">
-                {busy ? "Connecting securely…" : "Checking your session…"}
-              </p>
-            ) : signedIn ? (
-              <>
-                <p className="hint">Signed in as {signedIn.claims.displayName}.</p>
-                <button className="primary" onClick={() => proceed()}>
-                  Continue with this account →
-                </button>
-                <button className="text-button restart" onClick={() => start("switch")}>
-                  Use another account
-                </button>
-              </>
-            ) : (
-              <button className="primary submit" onClick={() => start("sign-in")}>
-                Continue with GitHub →
-              </button>
-            ))}
-          {compact && <p className="login-note">Your GitHub credentials stay with Yielded Auth.</p>}
-        </section>
-        {!compact && signedIn && (
-          <div className="workspace">
-            <section className="panel sign-in">
-              <h2>{signedIn.claims.displayName}</h2>
-              <p className="description">Manage the identities that can open your account.</p>
-              <p className="hint">
-                Account changes require sign-in within the last five minutes. Removing a method
-                signs out every Auth session.
-              </p>
-              <button className="primary" disabled={busy} onClick={() => start("link")}>
-                Link another account →
-              </button>
-              <div className="button-row">
-                <button className="secondary" disabled={busy} onClick={() => start("switch")}>
-                  Sign in again
-                </button>
-                <button className="secondary" disabled={busy} onClick={() => out()}>
-                  Sign out of Auth
-                </button>
-              </div>
-            </section>
-            <Links />
-          </div>
         )}
-      </div>
-      <footer>
-        <p>Your Yielded account. Each app keeps its own session.</p>
-        <a href="https://yielded.dev/auth/guide/examples/">Explore the examples ↗</a>
-      </footer>
-    </main>
+        <Failure result={completion} />
+        <Failure result={beginResult} />
+        <Failure result={outResult} />
+        <Failure result={session} />
+        {compact &&
+          (session._tag === "Initial" || session.waiting || busy ? (
+            <p className="hint" role="status">
+              {busy ? "Signing out…" : "Checking your session…"}
+            </p>
+          ) : signedIn ? (
+            <>
+              <p className="hint">Signed in as {signedIn.claims.displayName}.</p>
+              <button className="primary" onClick={() => proceed()}>
+                Continue with this account →
+              </button>
+              <button className="text-button restart" onClick={() => start("switch")}>
+                Use another account
+              </button>
+            </>
+          ) : (
+            <button className="primary submit" onClick={() => start("sign-in")}>
+              Continue with GitHub →
+            </button>
+          ))}
+        {compact && <p className="login-note">Your GitHub credentials stay with Yielded Auth.</p>}
+      </section>
+      {!compact && signedIn && (
+        <div className="workspace">
+          <section className="panel sign-in">
+            <h2>{signedIn.claims.displayName}</h2>
+            <p className="description">Manage the identities that can open your account.</p>
+            <p className="hint">
+              Account changes require sign-in within the last five minutes. Removing a method signs
+              out every Auth session.
+            </p>
+            <button className="primary" disabled={busy} onClick={() => start("link")}>
+              Link another account →
+            </button>
+            <div className="button-row">
+              <button className="secondary" disabled={busy} onClick={() => start("switch")}>
+                Sign in again
+              </button>
+              <button className="secondary" disabled={busy} onClick={() => out()}>
+                Sign out of Auth
+              </button>
+            </div>
+          </section>
+          <Links />
+        </div>
+      )}
+    </Page>
   );
 }
 
@@ -233,7 +257,7 @@ const root = document.getElementById("root");
 if (root === null) throw new Error("Missing account settings root");
 createRoot(root).render(
   <RegistryContext.Provider value={registry}>
-    <Settings />
+    <App />
   </RegistryContext.Provider>,
 );
 addEventListener("pagehide", () => {
