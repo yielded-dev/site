@@ -25,7 +25,14 @@ export const cursor = Atom.make<string | undefined>(undefined);
 export const sharedSignIn = Atom.make(location.pathname === "/sign-in");
 const authorizationPath = "/oauth/yielded/authorize";
 
-export const continueSignIn = Atom.fnSync(() => location.assign(authorizationPath));
+// Navigation starts before the browser unloads this document. Keep the transition
+// visible through that interval, independently of request completion.
+export const redirecting = Atom.make(false);
+
+export const continueSignIn = Atom.fnSync((_: void, get) => {
+  location.assign(authorizationPath);
+  get.set(redirecting, true);
+});
 
 export const linkedAccounts = Atom.make((get) => {
   const page = get(cursor);
@@ -64,6 +71,7 @@ export const begin = runtime.fn<"sign-in" | "link" | "switch">()(
       expiresAtMillis: started.expiresAtMillis,
     });
     yield* Effect.sync(() => location.assign(Redacted.value(started.authorizationUrl)));
+    get.set(redirecting, true);
   }),
 );
 
@@ -135,8 +143,12 @@ export const complete = runtime.fn<void>()(
 
       if ("returnTarget" in result && result.returnTarget === authorizationPath) {
         get.set(sharedSignIn, true);
-        if ("completion" in result && result.completion._tag === "Authenticated")
-          return yield* Effect.sync(() => location.replace(authorizationPath));
+        if ("completion" in result && result.completion._tag === "Authenticated") {
+          yield* Effect.sync(() => location.replace(authorizationPath));
+          get.set(redirecting, true);
+
+          return;
+        }
         yield* Effect.sync(() => history.replaceState(null, "", "/sign-in"));
       }
 
