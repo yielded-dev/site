@@ -17,8 +17,7 @@
   "auth": {
     "AUTH_ISSUER": "https://auth.yielded.dev",
     "AUTH_RESOURCE": "https://agent.yielded.dev",
-    "AUTH_JWKS_URL": "https://auth.yielded.dev/oauth/yielded/jwks",
-    "AUTH_HOSTED_MODEL_SCOPE": "agent:hosted-model"
+    "AUTH_JWKS_URL": "https://auth.yielded.dev/oauth/yielded/jwks"
   },
   "browser": {
     "name": "yielded-agent-browser-use",

@@ -4,7 +4,7 @@ import { DateTime, Effect, Layer, Redacted, Schema } from "effect";
 import { HttpServerRequest } from "effect/http";
 import { SqlClient } from "effect/sql";
 
-import { appScopes } from "../shared/access";
+import { appScopes } from "../shared/scopes";
 import { SettingsAuth } from "./auth";
 
 export const yielded = OAuthServer.makeOpenId("yielded", { scopes: appScopes });

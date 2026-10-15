@@ -3,8 +3,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { appScope } from "../auth/src/shared/scopes.ts";
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const config = JSON.parse(readFileSync(path.join(here, "hosting.json"), "utf8"));
+const auth = { ...config.auth, AUTH_HOSTED_MODEL_SCOPE: appScope.hostedModel };
 const source = path.resolve(here, "../../.sources/agent");
 const command = process.argv[2];
 
@@ -49,7 +52,7 @@ writeFileSync(
   JSON.stringify(
     {
       ...config.browser,
-      vars: { ...config.auth, AUTH_REQUIRED_SCOPE: "agent:browser-use", LAB_PUBLIC: "true" },
+      vars: { ...auth, AUTH_REQUIRED_SCOPE: appScope.browserUse, LAB_PUBLIC: "true" },
     },
     null,
     2,
@@ -59,7 +62,7 @@ writeFileSync(
 if (command !== "prepare") {
   if (command === "deploy" && !process.env.AUTH_YIELDED_CLIENT_SECRET)
     throw new Error("AUTH_YIELDED_CLIENT_SECRET is required");
-  const plannerEnv = { ...config.auth, AUTH_REQUIRED_SCOPE: "agent:planner" };
+  const plannerEnv = { ...auth, AUTH_REQUIRED_SCOPE: appScope.planner };
   const planner = path.join(source, "examples/travel-planner");
 
   run(

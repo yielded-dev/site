@@ -13,9 +13,10 @@ import {
   GrantChange,
   type LegacyAccounts,
   type LegacyGrants,
-  appScopes,
 } from "../shared/access";
+import { appScope } from "../shared/scopes";
 import { moduleId, SettingsAuth } from "./auth";
+import { yielded } from "./identity";
 
 /** Only the archived DO can supply legacy IDs. Never infer account ownership from names or email. */
 export interface LegacyDirectory {
@@ -206,12 +207,12 @@ export class AccessPolicy extends Context.Service<
 
 export const authorizationLayer = (resource: string) =>
   Layer.effect(
-    OAuthServer.OpenIdAuthorization,
+    yielded.Authorization,
     Effect.gen(function* () {
       const policy = yield* AccessPolicy;
       const sql = yield* SqlClient.SqlClient;
 
-      return OAuthServer.OpenIdAuthorization.of({
+      return yielded.Authorization.of({
         authorize: ({ authentication, clientId, resource: requestedResource, scopes }) =>
           Effect.gen(function* () {
             if (clientId !== "yielded-agent" || requestedResource !== resource)
@@ -227,9 +228,9 @@ export const authorizationLayer = (resource: string) =>
                 (scope) =>
                   scope === "openid" ||
                   scope === "profile" ||
-                  scope === appScopes[0] ||
-                  scope === appScopes[1] ||
-                  (scope === appScopes[2] && funded),
+                  scope === appScope.planner ||
+                  scope === appScope.browserUse ||
+                  (scope === appScope.hostedModel && funded),
               ),
               claims: {
                 accountId,

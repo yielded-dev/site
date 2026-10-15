@@ -1,6 +1,8 @@
 import { Schema } from "effect";
 
-export const appScopes = ["agent:planner", "agent:browser-use", "agent:hosted-model"] as const;
+import { authScopes } from "./scopes";
+
+export const AuthScope = Schema.Literals(authScopes);
 
 export const AccountId = Schema.String.check(
   Schema.isPattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
@@ -11,7 +13,7 @@ export const AppClaims = Schema.Struct({ accountId: AccountId, displayName: Sche
 export const AppSession = Schema.Struct({
   subjectId: Schema.String,
   ...AppClaims.fields,
-  scopes: Schema.Array(Schema.String),
+  scopes: Schema.Array(AuthScope),
   expiresAtMillis: Schema.Int,
 });
 

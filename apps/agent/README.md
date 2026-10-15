@@ -1,8 +1,9 @@
 # Hosted Agent examples
 
 Site owns the deployed Yielded example configuration in `hosting.json`: hostnames,
-Worker identities, scope policy and the exact Agent source revision. The Agent
-repository keeps the reusable travel-planner and browser-use examples and their
+Worker identities and the exact Agent source revision. Scope names come from
+`../auth/src/shared/scopes.ts`. The Agent repository keeps the reusable
+travel-planner and browser-use examples and their
 generic deployment code. Both consume Site's gateway and signed access tokens.
 
 ```sh

@@ -3,7 +3,7 @@ import { Effect, Layer, type Redacted } from "effect";
 import { FetchHttpClient } from "effect/http";
 import { SqlClient } from "effect/sql";
 
-import { appScopes } from "../shared/access";
+import { appScopes } from "../shared/scopes";
 import { AccessPolicy, accessRoutes, authorizationLayer, type LegacyDirectory } from "./access";
 import { SettingsActionsLive, SettingsAuth } from "./auth";
 import { consentLayer } from "./consent";
