@@ -16,6 +16,7 @@ import { CryptoLive } from "./crypto";
 import {
   cookie,
   accessCookie,
+  GatewayIssuer,
   GatewayUnavailable,
   makeGateway,
   random,
@@ -220,7 +221,21 @@ const appGateway = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
                   catch: () => GatewayUnavailable.make({}),
                 }),
             },
-          ).pipe(Effect.provide(CryptoLive));
+          ).pipe(
+            Effect.provide(CryptoLive),
+            Effect.provideService(GatewayIssuer, {
+              request: (request) =>
+                Effect.tryPromise({
+                  try: () => {
+                    const auth: DurableObjectNamespace = env.AUTH;
+
+                    // The gateway and issuer share this Worker; use the owning object's binding.
+                    return auth.getByName("yielded-auth-v1").fetch(request);
+                  },
+                  catch: () => GatewayUnavailable.make({}),
+                }),
+            }),
+          );
         }),
         (exit) => (Exit.isSuccess(exit) ? Infinity : 0),
       );

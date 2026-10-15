@@ -1,6 +1,6 @@
 import { OAuthServer } from "@yielded/auth";
 import type { Jwk } from "@yielded/jose";
-import { Clock, Effect, Redacted, Schema, Semaphore } from "effect";
+import { Clock, Context, Effect, Redacted, Schema, Semaphore } from "effect";
 import { Base64Url } from "effect/encoding";
 
 import { AppClaims, AppSession } from "../shared/access";
@@ -41,6 +41,11 @@ export class GatewayUnavailable extends Schema.TaggedError<GatewayUnavailable>()
   {},
 ) {}
 
+export class GatewayIssuer extends Context.Service<
+  GatewayIssuer,
+  { readonly request: (request: Request) => Effect.Effect<Response, GatewayUnavailable> }
+>()("site/auth/GatewayIssuer") {}
+
 class SignInRequired extends Schema.TaggedError<SignInRequired>()("SignInRequired", {}) {}
 class SignInPending extends Schema.TaggedError<SignInPending>()("SignInPending", {}) {}
 
@@ -80,6 +85,8 @@ export const sessionHandle = (request: Request) => {
  */
 export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorage) =>
   Effect.gen(function* () {
+    const issuer = yield* GatewayIssuer;
+
     const verifier = yield* OAuthServer.makeAccessTokenVerifier({
       issuer: config.issuer,
       resource: config.resource,
@@ -109,16 +116,14 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
           ...fields,
         });
 
-        const response = yield* Effect.tryPromise({
-          try: () =>
-            fetch(`${config.issuer}/oauth/yielded/token`, {
-              method: "POST",
-              body,
-              redirect: "error",
-              signal: AbortSignal.timeout(15_000),
-            }),
-          catch: () => GatewayUnavailable.make({}),
-        });
+        const response = yield* issuer.request(
+          new Request(`${config.issuer}/oauth/yielded/token`, {
+            method: "POST",
+            body,
+            redirect: "error",
+            signal: AbortSignal.timeout(15_000),
+          }),
+        );
 
         if (response.status === 400 || response.status === 401)
           return yield* SignInRequired.make({});
@@ -355,16 +360,16 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
               token_type_hint: "refresh_token",
             });
 
-            yield* Effect.tryPromise({
-              try: () =>
-                fetch(`${config.issuer}/oauth/yielded/revoke`, {
+            yield* issuer
+              .request(
+                new Request(`${config.issuer}/oauth/yielded/revoke`, {
                   method: "POST",
                   body,
                   redirect: "error",
                   signal: AbortSignal.timeout(10_000),
                 }),
-              catch: () => GatewayUnavailable.make({}),
-            }).pipe(Effect.ignore);
+              )
+              .pipe(Effect.ignore);
           }
 
           return signedOut();
