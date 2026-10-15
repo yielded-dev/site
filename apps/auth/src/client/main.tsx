@@ -7,7 +7,10 @@ import { AtomRegistry, type AsyncResult } from "effect/reactivity";
 import { useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { AccessRejected } from "../shared/access";
 import {
+  accessSettings,
+  changeAccess,
   auth,
   CallbackExpired,
   begin,
@@ -60,7 +63,7 @@ function Page({ compact, children }: { readonly compact: boolean; readonly child
       </header>
       <div className={compact ? "login-content" : "account-content"}>{children}</div>
       <footer>
-        <p>Your Yielded account. Each app keeps its own session.</p>
+        <p>One Yielded account for your apps.</p>
         <a href="https://yielded.dev/auth/guide/examples/">Explore the examples ↗</a>
       </footer>
     </main>
@@ -164,9 +167,122 @@ function Settings() {
             </div>
           </section>
           <Links />
+          <Access />
         </div>
       )}
     </Page>
+  );
+}
+
+function Access() {
+  const settings = useAtomValue(accessSettings);
+  const [change, submit] = useAtom(changeAccess);
+  const [username, setUsername] = useState("");
+
+  const reason =
+    change._tag === "Failure"
+      ? change.cause.reasons
+          .filter(Cause.isFailReason)
+          .map((item) => item.error)
+          .find(Schema.is(AccessRejected))?.reason
+      : undefined;
+
+  return (
+    <section className="panel session-panel access-panel">
+      <div className="section-heading">
+        <h2>App access</h2>
+        <span className="badge active">YIELDED</span>
+      </div>
+      <p className="description">
+        Everyone can use the examples with their own API key. Hosted-key access is granted
+        separately.
+      </p>
+      {settings.waiting && <p role="status">Loading access…</p>}
+      {settings._tag === "Failure" && (
+        <p className="notice error" role="alert">
+          App access could not be loaded. Refresh to try again.
+        </p>
+      )}
+      {settings._tag === "Success" && (
+        <>
+          <p className="hint">
+            {settings.value.hostedModel
+              ? "You have hosted-key access."
+              : "Use your own API key to run the examples."}
+          </p>
+          {settings.value.administrator && (
+            <>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submit({ action: "grant", username: username.trim() });
+                }}
+              >
+                <label htmlFor="grant-github">Grant hosted-key access</label>
+                <input
+                  id="grant-github"
+                  name="github"
+                  autoComplete="off"
+                  placeholder="GitHub username"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  required
+                  maxLength={39}
+                />
+                <p className="hint">
+                  You can grant access before they sign up. They must sign in with this GitHub
+                  identity.
+                </p>
+                <button
+                  className="secondary"
+                  type="submit"
+                  disabled={change.waiting || username.trim().length === 0}
+                >
+                  {change.waiting ? "Saving…" : "Grant access"}
+                </button>
+              </form>
+              {change._tag === "Failure" && (
+                <p className="notice error" role="alert">
+                  {reason === "recent-sign-in"
+                    ? "Sign in again above, then retry this permission change."
+                    : reason === "github-user"
+                      ? "That GitHub user was not found."
+                      : "The permission change could not be confirmed. Refresh to check the current access list."}
+                </p>
+              )}
+              {change._tag === "Success" && !change.waiting && (
+                <p className="notice success" role="status">
+                  Access updated.
+                </p>
+              )}
+              <ul className="passkey-list">
+                {settings.value.grants.map((grant) => (
+                  <li key={`${grant.kind}:${grant.target}`}>
+                    <strong>{grant.label}</strong>
+                    <span>
+                      {grant.kind} · {grant.target}
+                      {grant.kind === "email" ? " · legacy grant, requires migration" : ""}
+                    </span>
+                    <button
+                      className="text-button"
+                      disabled={change.waiting}
+                      onClick={() =>
+                        submit({ action: "revoke", kind: grant.kind, target: grant.target })
+                      }
+                    >
+                      Revoke access for {grant.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {settings.value.grants.length === 0 && (
+                <p className="empty">No hosted-key grants yet.</p>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 

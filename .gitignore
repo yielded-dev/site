@@ -13,6 +13,7 @@ dist
 .wrangler
 .dev-kit
 .repos
+.sources
 .alchemy
 
 **/.data/

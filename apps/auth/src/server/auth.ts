@@ -5,7 +5,7 @@ import { Registration, SettingsApi } from "../shared/contract";
 import { requirement } from "./sql";
 
 export const moduleId = "browser/oauth-settings";
-export const sessionConfiguration = Sessions.stateAssisted({ maxAge: "8 hours" });
+export const sessionConfiguration = Sessions.stateAssisted({ maxAge: "30 days" });
 
 export const SettingsAuth = Auth.make(SettingsApi, {
   sessions: sessionConfiguration,

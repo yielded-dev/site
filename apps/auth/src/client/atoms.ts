@@ -3,6 +3,7 @@ import { Effect, Redacted, Schema } from "effect";
 import { KeyValueStore } from "effect/persistence";
 import { Atom } from "effect/reactivity";
 
+import { AccessRejected, AccessSettings, type GrantChange } from "../shared/access";
 import { SettingsApi } from "../shared/contract";
 
 // Only public attempt metadata survives a redirect; no code, state, or bearer.
@@ -28,6 +29,48 @@ const authorizationPath = "/oauth/yielded/authorize";
 // Navigation starts before the browser unloads this document. Keep the transition
 // visible through that interval, independently of request completion.
 export const redirecting = Atom.make(false);
+
+const accessRequest = Effect.fn("SiteAccess.request")(function* (change?: typeof GrantChange.Type) {
+  const response = yield* Effect.tryPromise({
+    try: () =>
+      fetch(
+        "/api/access",
+        change === undefined
+          ? { credentials: "same-origin" }
+          : {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(change),
+            },
+      ),
+    catch: () => AccessRejected.make({ reason: "unavailable" }),
+  });
+
+  const value = yield* Effect.tryPromise({
+    try: () => response.json(),
+    catch: () => AccessRejected.make({ reason: "unavailable" }),
+  });
+
+  if (!response.ok) {
+    const error = yield* Schema.decodeUnknownEffect(
+      Schema.Struct({ reason: AccessRejected.fields.reason }),
+    )(value);
+
+    return yield* AccessRejected.make(error);
+  }
+
+  return yield* Schema.decodeUnknownEffect(AccessSettings)(value);
+});
+
+export const accessSettings = runtime.atom(accessRequest());
+
+export const changeAccess = runtime.fn<typeof GrantChange.Type>()(
+  Effect.fn("SiteAccess.change")(function* (change, get) {
+    yield* accessRequest(change);
+    get.refresh(accessSettings);
+  }),
+);
 
 export const continueSignIn = Atom.fnSync((_: void, get) => {
   location.assign(authorizationPath);
@@ -214,7 +257,7 @@ export const signOut = runtime.fn<void>()(
     get.set(cursor, undefined);
     get.set(
       notice,
-      "Signed out of Yielded Auth. Existing Agent sessions are separate; sign out there to end them.",
+      "Signed out of Yielded. App access expires within five minutes; sign out in the app to end it immediately.",
     );
   }),
 );

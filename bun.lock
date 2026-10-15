@@ -20,6 +20,10 @@
         "vite-plus": "catalog:",
       },
     },
+    "apps/agent": {
+      "name": "@yielded/site-agent",
+      "version": "0.0.0",
+    },
     "apps/auth": {
       "name": "@yielded/site-auth",
       "version": "0.0.0",
@@ -1036,6 +1040,8 @@
     "@yielded/landing": ["@yielded/landing@workspace:apps/landing"],
 
     "@yielded/oauth": ["@yielded/oauth@0.1.0-beta.40", "", { "dependencies": { "@yielded/jose": "0.1.0-beta.40" }, "peerDependencies": { "effect": "^4.0.3" } }, "sha512-0+FeNuBIRBLvGC7I5ADCTcyyKGQy+2twdB2mu9N/GFKC4qHMujERQOsskLFNMd3BWZYQuAR9AKeSgebMm/d9tw=="],
+
+    "@yielded/site-agent": ["@yielded/site-agent@workspace:apps/agent"],
 
     "@yielded/site-auth": ["@yielded/site-auth@workspace:apps/auth"],
 

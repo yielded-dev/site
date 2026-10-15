@@ -6,11 +6,22 @@ import {
   HttpRouter,
   HttpServer,
   HttpServerError,
+  HttpServerRequest,
   HttpServerResponse,
 } from "effect/http";
 
+import { AccessRejected, LegacyAccounts, LegacyGrants } from "../shared/access";
 import { settingsApplication } from "./application";
 import { CryptoLive } from "./crypto";
+import {
+  cookie,
+  accessCookie,
+  GatewayUnavailable,
+  makeGateway,
+  random,
+  sessionCookie,
+  sessionHandle,
+} from "./gateway";
 import { IdentityKeyMaterial } from "./identity-keys";
 import { SettingsKeyMaterial, settingsKeysLayer } from "./keys";
 
@@ -96,6 +107,56 @@ const hostedAuth = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
               externalSubject: config.GITHUB_USER_ID,
               displayName: config.YIELDED_DISPLAY_NAME,
               stylesheet,
+              legacy: {
+                accounts: (subjectId, githubIds) =>
+                  Effect.gen(function* () {
+                    const archive: DurableObjectNamespace = env.LEGACY_AGENT_AUTH;
+
+                    const response = yield* Effect.tryPromise({
+                      try: () =>
+                        archive
+                          .getByName("auth-v1")
+                          .fetch("https://archive.internal/_internal/migration/accounts", {
+                            method: "POST",
+                            body: JSON.stringify({ subjectId, githubIds }),
+                          }),
+                      catch: () => AccessRejected.make({ reason: "unavailable" }),
+                    });
+
+                    if (!response.ok) return yield* AccessRejected.make({ reason: "unavailable" });
+
+                    return yield* Effect.tryPromise({
+                      try: () => response.json(),
+                      catch: () => AccessRejected.make({ reason: "unavailable" }),
+                    }).pipe(
+                      Effect.flatMap(Schema.decodeUnknownEffect(LegacyAccounts)),
+                      Effect.mapError(() => AccessRejected.make({ reason: "unavailable" })),
+                    );
+                  }),
+                grants: Effect.gen(function* () {
+                  const archive: DurableObjectNamespace = env.LEGACY_AGENT_AUTH;
+
+                  const response = yield* Effect.tryPromise({
+                    try: () =>
+                      archive
+                        .getByName("auth-v1")
+                        .fetch("https://archive.internal/_internal/migration/grants", {
+                          method: "POST",
+                        }),
+                    catch: () => AccessRejected.make({ reason: "unavailable" }),
+                  });
+
+                  if (!response.ok) return yield* AccessRejected.make({ reason: "unavailable" });
+
+                  return yield* Effect.tryPromise({
+                    try: () => response.json(),
+                    catch: () => AccessRejected.make({ reason: "unavailable" }),
+                  }).pipe(
+                    Effect.flatMap(Schema.decodeUnknownEffect(LegacyGrants)),
+                    Effect.mapError(() => AccessRejected.make({ reason: "unavailable" })),
+                  );
+                }),
+              },
               agent: {
                 origin: new URL(config.YIELDED_AGENT_ORIGIN),
                 secret: config.YIELDED_AGENT_CLIENT_SECRET,
@@ -112,12 +173,72 @@ const hostedAuth = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
         }).pipe(
           Effect.orElseSucceed(() => Effect.succeed(unavailable)),
           Effect.flatten,
+          Effect.catchTag("HttpBodyError", () => Effect.succeed(unavailable)),
           Effect.mapError((reason) =>
             HttpServerError.isHttpServerError(reason)
               ? reason
               : new HttpServerError.HttpServerError({ reason }),
           ),
         ),
+      };
+    }),
+  ),
+);
+
+const appGateway = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
+  Effect.map(Cloudflare.DurableObjectState, (state) =>
+    Effect.gen(function* () {
+      const prepared = yield* Effect.cachedWithTTL(
+        Effect.gen(function* () {
+          const config = yield* Schema.decodeUnknownEffect(Configuration)(env, {
+            reportInput: false,
+          });
+
+          return yield* makeGateway(
+            {
+              issuer: config.AUTH_ORIGIN,
+              resource: config.YIELDED_AGENT_ORIGIN,
+              clientSecret: config.YIELDED_AGENT_CLIENT_SECRET,
+              publicKeys: [config.AUTH_IDENTITY_KEYS.publicKey],
+            },
+            {
+              read: Effect.tryPromise({
+                try: () => state.raw.storage.get("session"),
+                catch: () => GatewayUnavailable.make({}),
+              }),
+              write: (value, expiresAt) =>
+                Effect.tryPromise({
+                  try: async () => {
+                    if (expiresAt === 0) {
+                      await state.raw.storage.deleteAll();
+                      await state.raw.storage.deleteAlarm();
+                    } else {
+                      await state.raw.storage.put("session", value);
+                      await state.raw.storage.setAlarm(expiresAt);
+                    }
+                  },
+                  catch: () => GatewayUnavailable.make({}),
+                }),
+            },
+          ).pipe(Effect.provide(CryptoLive));
+        }),
+        (exit) => (Exit.isSuccess(exit) ? Infinity : 0),
+      );
+
+      return {
+        fetch: Effect.gen(function* () {
+          const gateway = yield* prepared;
+          const request = yield* HttpServerRequest.HttpServerRequest;
+
+          return HttpServerResponse.fromWeb(
+            yield* gateway.handle(yield* HttpServerRequest.toWeb(request)),
+          );
+        }).pipe(Effect.orElseSucceed(() => unavailable)),
+        alarm: () =>
+          prepared.pipe(
+            Effect.flatMap((gateway) => gateway.expire),
+            Effect.orDie,
+          ),
       };
     }),
   ),
@@ -130,10 +251,16 @@ export default class Auth extends Cloudflare.Worker<Auth>()(
     main: import.meta.url,
     compatibility: { date: "2026-07-01", flags: ["nodejs_compat"] },
     domain: { name: "auth.yielded.dev", zoneName: "yielded.dev" },
+    routes: [{ pattern: "agent.yielded.dev/auth/*", zoneName: "yielded.dev" }],
     workersDev: { enabled: false, previewsEnabled: false },
     assets: { directory: "./dist", runWorkerFirst: true },
     env: {
       AUTH: Cloudflare.DurableObject("AuthV1", { className: "HostedAuth" }),
+      APP_SESSIONS: Cloudflare.DurableObject("AppSessionsV1", { className: "AppSession" }),
+      LEGACY_AGENT_AUTH: Cloudflare.DurableObject("LegacyAgentAuth", {
+        className: "PlannerAuthV2",
+        scriptName: "effect-agent-travel-planner",
+      }),
       AUTH_ORIGIN: "https://auth.yielded.dev",
       GITHUB_CLIENT_ID: Config.NonEmptyString("GITHUB_CLIENT_ID"),
       GITHUB_CLIENT_SECRET: Config.Redacted("GITHUB_CLIENT_SECRET"),
@@ -159,6 +286,11 @@ export default class Auth extends Cloudflare.Worker<Auth>()(
       constructor: yield* hostedAuth,
       services: yield* Effect.context(),
     } satisfies Cloudflare.DurableObjectExport);
+    yield* (yield* Cloudflare.Worker).export("AppSession", {
+      kind: "durableObject",
+      constructor: yield* appGateway,
+      services: yield* Effect.context(),
+    } satisfies Cloudflare.DurableObjectExport);
 
     return {
       fetch: Effect.gen(function* () {
@@ -168,6 +300,64 @@ export default class Auth extends Cloudflare.Worker<Auth>()(
         const auth: DurableObjectNamespace = env.AUTH;
         const origin = yield* Schema.decodeEffect(Origin)(env.AUTH_ORIGIN, { reportInput: false });
         const url = new URL(request.url);
+
+        if (url.origin === env.YIELDED_AGENT_ORIGIN && url.pathname.startsWith("/auth/")) {
+          if (request.method === "POST" && request.headers.get("origin") !== url.origin)
+            return HttpServerResponse.empty({ status: 403 });
+          const fresh = request.method === "GET" && url.pathname === "/auth/login";
+          const handle = fresh ? random() : sessionHandle(request);
+
+          if (handle === undefined) {
+            if (url.pathname === "/auth/yielded/callback")
+              return HttpServerResponse.text(
+                "This browser no longer has the sign-in attempt. Return to the app and sign in again.",
+                {
+                  status: 400,
+                  headers: { "cache-control": "no-store", "referrer-policy": "no-referrer" },
+                },
+              );
+            if (!["/auth/session", "/auth/refresh", "/auth/logout"].includes(url.pathname))
+              return HttpServerResponse.empty({ status: 404 });
+
+            const empty = new Response("null", {
+              headers: { "content-type": "application/json", "cache-control": "no-store" },
+            });
+
+            empty.headers.append("set-cookie", cookie(accessCookie, "", 0));
+            empty.headers.append("set-cookie", cookie(sessionCookie, "", 0));
+
+            return HttpServerResponse.fromWeb(empty);
+          }
+          const sessions: DurableObjectNamespace = env.APP_SESSIONS;
+
+          const response = yield* Effect.tryPromise({
+            try: async () => {
+              // Hash the bearer before using it as an object name.
+              const digest = await crypto.subtle.digest(
+                "SHA-256",
+                new TextEncoder().encode(handle),
+              );
+
+              const name = Array.from(new Uint8Array(digest), (byte) =>
+                byte.toString(16).padStart(2, "0"),
+              ).join("");
+
+              const reply = await sessions.getByName(name).fetch(request);
+              const outgoing = new Response(reply.body, reply);
+
+              if (fresh && reply.status === 303)
+                outgoing.headers.append(
+                  "set-cookie",
+                  cookie(sessionCookie, handle, 30 * 24 * 60 * 60),
+                );
+
+              return outgoing;
+            },
+            catch: () => HostedAuthUnavailable.make({}),
+          });
+
+          return HttpServerResponse.fromWeb(response);
+        }
 
         if (url.origin !== origin) return HttpServerResponse.text("Not found", { status: 404 });
         if (url.pathname === "/")

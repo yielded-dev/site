@@ -39,6 +39,7 @@ wins over the landing page's `yielded.dev/*`.
 - `packages/starlight-theme` — `@yielded/starlight-theme`, a Starlight plugin with the shared
   design tokens, library switcher, link preview images, and Markdown helpers. See its README.
 - [`apps/auth`](apps/auth) — GitHub sign-in, account settings and OpenID identity for Yielded apps.
+- [`apps/agent`](apps/agent) — hosted example deployment configuration. The examples consume Site's accounts and permissions.
 - `apps/landing` — the static landing page. It uses the theme's tokens and library registry.
 - `scripts/migrate-vitepress.ts` — one-off converter for moving a VitePress docs folder to
   Starlight (titles, callouts, code titles).

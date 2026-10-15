@@ -168,6 +168,12 @@ h1 span {
   gap: 24px;
   align-items: start;
 }
+.access-panel {
+  grid-column: 1 / -1;
+}
+.access-panel form {
+  max-width: 440px;
+}
 .panel {
   border: 1px solid var(--border);
   border-radius: 14px;
