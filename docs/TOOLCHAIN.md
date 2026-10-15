@@ -138,8 +138,9 @@ and `vp run ready`. Site does not build, version or publish the library packages
 
 ## Hosted Agent examples
 
-[`apps/agent`](../apps/agent) owns production configuration for the travel planner
-and browser-use examples. Its `hosting.json` pins an Agent commit; `prepare:source`
-checks it out in `.sources/agent`. Generic example code stays in Agent, while
-Site chooses the deployment identities, routes and authorization scopes. See the
-app README for the coordinated initial auth migration and required existing keys.
+The [travel planner](https://github.com/yielded-dev/agent/tree/main/examples/travel-planner)
+and [browser-use](https://github.com/yielded-dev/agent/tree/main/examples/browser-speed)
+examples deploy independently from the Agent repository. Each owns its Worker
+configuration and deployment workflow. Site owns the sign-in gateway at
+`agent.yielded.dev/auth/*`, account policy and scopes; deploying an example does
+not require a Site release.
