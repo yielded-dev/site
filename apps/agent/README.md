@@ -28,7 +28,8 @@ keys during a repository move.
 
 The manual `Deploy Agent examples` workflow uses Site repository secrets
 `AGENT_BYOK_ENCRYPTION_KEY`, `AGENT_OPENAI_KEY` and `AUTH_AGENT_CLIENT_SECRET`, plus
-the existing Cloudflare credentials. Copy the existing key values into Site's
+`AGENT_CLOUDFLARE_API_TOKEN` (the existing Agent token with container permissions)
+and `CLOUDFLARE_ACCOUNT_ID`. Copy the existing key values into Site's
 secret configuration before the first deployment. The former Agent-hosted deploy
 workflow is removed so one repository owns production configuration.
 
