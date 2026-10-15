@@ -80,7 +80,7 @@ HTTPS Worker and secure cookies.
 `access.ts` owns grants and legacy mappings; `gateway.ts` owns the application
 session. `src/client/atoms.ts` owns browser queries and workflows; React renders
 and dispatches. `src/shared/scopes.ts` declares the branded scope values used by the
-issuer, gateway, session schema and example deployments. Shared schemas live in
+issuer, gateway and session schema. Shared schemas live in
 `src/shared`.
 
 ## Deployment
@@ -103,12 +103,10 @@ public variables `AUTH_GITHUB_CLIENT_ID`, `AUTH_GITHUB_USER_ID`, `AUTH_DISPLAY_N
 Automatic deployment requires `AUTH_DEPLOY_ENABLED=true`. Logging and tracing stay
 disabled around authentication credentials.
 
-The initial cutover must deploy the matching Agent archive and consumers first,
-then Site's gateway, which needs the archive's migration endpoints. Sign-in is
-unavailable between these steps. Site takes ownership of the existing `/auth/*` route. Old
-planner login cookies are retired; users sign in through Yielded once. Keep the
-archived object and existing BYOK keys throughout. See [hosted examples](../agent/README.md)
-for the Site-owned application deployment configuration.
+The [Agent examples](https://github.com/yielded-dev/agent/tree/main/examples) own
+their Worker deployments and release independently. Site retains the `/auth/*`
+route; the planner retains its archived object and existing BYOK keys. Keep the
+archive's private migration interface compatible while Site uses it.
 
 ## Library dependency
 
