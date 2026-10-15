@@ -7,11 +7,20 @@ services, application policy, SQL storage and consent. Effect Atom owns the brow
 workflows. React renders and dispatches. [worker.ts](src/server/worker.ts) declares the
 Alchemy Worker and Durable Object runtime; each request scope owns its SQL services.
 
-This host provisions one configured GitHub owner and registers Yielded Agent.
-Account settings list, link and remove login identities. Provider tokens remain
+Anyone can register or sign in with GitHub. First sign-in creates a separate
+Yielded account and establishes its session without another GitHub round trip.
+The configured GitHub owner keeps its existing account. Account settings list,
+link and remove login identities. Provider tokens remain
 private and are not retained as API grants. Recent authentication authorizes
 account changes; unlink invalidates Auth sessions and cannot remove the last
-usable sign-in method. Provisioning runs once and never restores removed links.
+usable sign-in method. Owner provisioning runs once and never restores removed links.
+
+Agent owns its hosted API-key allowlist independently of account registration.
+Its administrator can grant access to a GitHub username before that person signs
+in. Agent resolves the username to GitHub's immutable ID and checks the account's
+current linked identities through `POST /internal/agent/identities`. This
+server-only endpoint requires Agent's existing client secret as a bearer token;
+removing a GitHub identity removes it from subsequent allowlist checks.
 
 ## Source layout
 
@@ -103,8 +112,7 @@ Discovery is `https://auth.yielded.dev/.well-known/openid-configuration`; GitHub
 callback is `https://auth.yielded.dev/oauth-settings/callback`. Each additional
 application needs its own exact callback, confidential client secret and policy.
 Auth logout revokes subsequent identity access; existing Agent sessions remain
-independent. Global logout, public registration and OpenID certification are not
-provided by this host.
+independent. Global logout and OpenID certification are not provided by this host.
 
 ## Library dependency
 

@@ -1,6 +1,6 @@
 import * as SqliteClient from "@effect/sql-sqlite-do/SqliteClient";
 import * as Cloudflare from "alchemy/Cloudflare";
-import { Config, Effect, Layer, Schema } from "effect";
+import { Config, Effect, Exit, Layer, Schema } from "effect";
 import {
   HttpMiddleware,
   HttpRouter,
@@ -51,62 +51,74 @@ const unavailable = HttpServerResponse.text(
 /** The request scope owns the SQL layer and its one transaction owner. */
 const hostedAuth = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
   Effect.map(Cloudflare.DurableObjectState, (state) =>
-    Effect.succeed({
-      fetch: Effect.gen(function* () {
-        const assets: Fetcher = env.ASSETS;
+    Effect.gen(function* () {
+      // Only immutable preparation survives requests; failed asset reads remain retryable.
+      const prepared = yield* Effect.cachedWithTTL(
+        Effect.gen(function* () {
+          const assets: Fetcher = env.ASSETS;
 
-        const config = yield* Schema.decodeUnknownEffect(Configuration)(env, {
-          reportInput: false,
-        });
+          const config = yield* Schema.decodeUnknownEffect(Configuration)(env, {
+            reportInput: false,
+          });
 
-        const response = yield* Effect.tryPromise({
-          try: () => assets.fetch(`${config.AUTH_ORIGIN}/oauth-settings.html`),
-          catch: () => HostedAuthUnavailable.make({}),
-        });
+          const response = yield* Effect.tryPromise({
+            try: () => assets.fetch(`${config.AUTH_ORIGIN}/oauth-settings.html`),
+            catch: () => HostedAuthUnavailable.make({}),
+          });
 
-        if (response.status !== 200) return yield* HostedAuthUnavailable.make({});
+          if (response.status !== 200) return yield* HostedAuthUnavailable.make({});
 
-        const html = yield* Effect.tryPromise({
-          try: () => response.text(),
-          catch: () => HostedAuthUnavailable.make({}),
-        });
+          const html = yield* Effect.tryPromise({
+            try: () => response.text(),
+            catch: () => HostedAuthUnavailable.make({}),
+          });
 
-        const stylesheet = html.match(
-          /<link rel="stylesheet"[^>]*href="(\/assets\/[^"<>]+\.css)"/,
-        )?.[1];
+          const stylesheet = html.match(
+            /<link rel="stylesheet"[^>]*href="(\/assets\/[^"<>]+\.css)"/,
+          )?.[1];
 
-        if (stylesheet === undefined) return yield* HostedAuthUnavailable.make({});
+          if (stylesheet === undefined) return yield* HostedAuthUnavailable.make({});
 
-        return yield* HttpRouter.toHttpEffect(
-          settingsApplication({
-            origin: new URL(config.AUTH_ORIGIN),
-            clientId: config.GITHUB_CLIENT_ID,
-            clientSecret: config.GITHUB_CLIENT_SECRET,
-            externalSubject: config.GITHUB_USER_ID,
-            displayName: config.YIELDED_DISPLAY_NAME,
-            stylesheet,
-            agent: {
-              origin: new URL(config.YIELDED_AGENT_ORIGIN),
-              secret: config.YIELDED_AGENT_CLIENT_SECRET,
-              keys: config.AUTH_IDENTITY_KEYS,
-            },
-          }).pipe(
-            Layer.provide(settingsKeysLayer(config.AUTH_SETTINGS_KEYS)),
-            Layer.provide(SqliteClient.layer({ storage: state.raw.storage })),
-            Layer.provide(CryptoLive),
-            Layer.provide(HttpServer.layerServices),
-            Layer.provide(Layer.succeed(HttpMiddleware.TracerDisabledWhen, () => true)),
+          return { config, stylesheet };
+        }),
+        (exit) => (Exit.isSuccess(exit) ? Infinity : 0),
+      );
+
+      return {
+        fetch: Effect.gen(function* () {
+          const { config, stylesheet } = yield* prepared;
+
+          return yield* HttpRouter.toHttpEffect(
+            settingsApplication({
+              origin: new URL(config.AUTH_ORIGIN),
+              clientId: config.GITHUB_CLIENT_ID,
+              clientSecret: config.GITHUB_CLIENT_SECRET,
+              externalSubject: config.GITHUB_USER_ID,
+              displayName: config.YIELDED_DISPLAY_NAME,
+              stylesheet,
+              agent: {
+                origin: new URL(config.YIELDED_AGENT_ORIGIN),
+                secret: config.YIELDED_AGENT_CLIENT_SECRET,
+                keys: config.AUTH_IDENTITY_KEYS,
+              },
+            }).pipe(
+              Layer.provide(settingsKeysLayer(config.AUTH_SETTINGS_KEYS)),
+              Layer.provide(SqliteClient.layer({ storage: state.raw.storage })),
+              Layer.provide(CryptoLive),
+              Layer.provide(HttpServer.layerServices),
+              Layer.provide(Layer.succeed(HttpMiddleware.TracerDisabledWhen, () => true)),
+            ),
+          );
+        }).pipe(
+          Effect.orElseSucceed(() => Effect.succeed(unavailable)),
+          Effect.flatten,
+          Effect.mapError((reason) =>
+            HttpServerError.isHttpServerError(reason)
+              ? reason
+              : new HttpServerError.HttpServerError({ reason }),
           ),
-        );
-      }).pipe(
-        Effect.orElseSucceed(() => Effect.succeed(unavailable)),
-        Effect.flatten,
-        Effect.mapError((reason) =>
-          HttpServerError.isHttpServerError(reason)
-            ? reason
-            : new HttpServerError.HttpServerError({ reason }),
         ),
-      ),
+      };
     }),
   ),
 );

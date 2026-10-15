@@ -1,6 +1,8 @@
 import { AuthContract, Hooks, Identity, OAuth, Operations } from "@yielded/auth";
 import { Schema } from "effect";
 
+export const Registration = Schema.Struct({});
+
 const failure = Schema.Union([
   Operations.AuthenticationRequired,
   OAuth.OAuthActionRequired,
@@ -17,6 +19,10 @@ export const SettingsApi = AuthContract.make("oauth-settings", {
   actions: (sessions) => ({
     signIn: AuthContract.oauthSignIn({ strategy: "oauth" }),
     completeSignIn: AuthContract.oauthCompleteSignIn(sessions, { strategy: "oauth" }),
+    register: AuthContract.oauthRegister(sessions, Registration, {
+      strategy: "oauth",
+      authenticate: true,
+    }),
     listLinkedAccounts: AuthContract.oauthListLinkedAccounts({ strategy: "accounts" }),
     linkAccount: AuthContract.action({
       payload: OAuth.OAuthLinkBegin,

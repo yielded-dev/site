@@ -252,6 +252,8 @@ export const ownership = {
 const migrations = [
   `CREATE TABLE IF NOT EXISTS oauth_subject (
     "id" TEXT PRIMARY KEY NOT NULL, "status" TEXT NOT NULL, "securityRevision" TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS oauth_account_profile (
+    "subjectId" TEXT PRIMARY KEY NOT NULL, "displayName" TEXT NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS oauth_authority_credential (
     "subjectId" TEXT NOT NULL, "credentialId" TEXT NOT NULL, "revision" TEXT NOT NULL, "status" TEXT NOT NULL,
     UNIQUE("subjectId", "credentialId"))`,

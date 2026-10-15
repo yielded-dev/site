@@ -3,7 +3,8 @@ import * as Mapping from "@yielded/auth-persistence/OAuthPersistence";
 import { Context, Effect, Layer } from "effect";
 
 import { makeAccountsMapping } from "./accounts";
-import { moduleId } from "./auth";
+import { moduleId, SettingsAuth } from "./auth";
+import { makeRegistrationServices } from "./registration";
 import { SettingsSessionsLive } from "./sessions";
 import { makeMappings, makeServices } from "./sql";
 
@@ -20,6 +21,7 @@ export const settingsStorage = (externalSubject: string) => {
       });
 
       const mapping = yield* makeAccountsMapping();
+      const registration = yield* makeRegistrationServices;
 
       const accounts = yield* Mapping.makeOAuthAccountsServices({
         ...mapping,
@@ -35,6 +37,11 @@ export const settingsStorage = (externalSubject: string) => {
 
       return (yield* makeServices(base)).pipe(
         Context.add(OAuth.OAuthAccountsPersistence, accounts.oauthAccountsPersistence),
+        Context.add(OAuth.OAuthRegistrationIntents, registration.oauthRegistrationIntents),
+        Context.add(
+          SettingsAuth.strategies.oauth.registration.RegistrationAuthority,
+          registration.registrationAuthority,
+        ),
       );
     }),
   );

@@ -1,6 +1,6 @@
 import { OAuthServer } from "@yielded/auth";
 import { OAuthServerPersistence } from "@yielded/auth-persistence";
-import { DateTime, Effect, Layer, Redacted } from "effect";
+import { DateTime, Effect, Layer, Redacted, Schema } from "effect";
 import { HttpServerRequest } from "effect/http";
 import { SqlClient } from "effect/sql";
 
@@ -61,7 +61,20 @@ export const identityLayer = (cookieName: string, displayName: string) =>
           },
           Effect.mapError(() => OAuthServer.Unavailable.make({})),
         ),
-        profile: () => Effect.succeed({ name: displayName }),
+        profile: Effect.fn("YieldedIdentity.profile")(
+          function* (authentication) {
+            const rows = yield* sql`SELECT "displayName" FROM oauth_account_profile
+              WHERE "subjectId" = ${authentication.subjectId}`;
+
+            const name = yield* Schema.decodeUnknownEffect(Schema.String)(
+              rows[0]?.displayName ??
+                (authentication.subjectId === "settings-owner" ? displayName : "Yielded member"),
+            );
+
+            return { name };
+          },
+          Effect.mapError(() => OAuthServer.Unavailable.make({})),
+        ),
       });
     }),
   );

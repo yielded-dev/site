@@ -1,7 +1,9 @@
 import { Hooks, Http, OAuth, OAuthServer } from "@yielded/auth";
 import { Effect, Layer, type Redacted } from "effect";
 import { FetchHttpClient } from "effect/http";
+import { SqlClient } from "effect/sql";
 
+import { agentIdentityRoutes } from "./agent";
 import { SettingsActionsLive, SettingsAuth } from "./auth";
 import { consentLayer } from "./consent";
 import { CryptoLive } from "./crypto";
@@ -38,9 +40,29 @@ export const settingsApplication = (config: SettingsConfiguration) => {
     Hooks.LifecycleHooks.empty,
     providerLayer(config),
     OAuth.OAuthReturnTargets.exactRoutes(["/oauth-settings", yielded.paths.authorize]),
-    Layer.succeed(SettingsAuth.strategies.oauth.SessionClaims, {
-      resolve: () => Effect.succeed({ displayName: config.displayName }),
-    }),
+    Layer.effect(
+      SettingsAuth.strategies.oauth.SessionClaims,
+      Effect.gen(function* () {
+        const sql = yield* SqlClient.SqlClient;
+
+        return SettingsAuth.strategies.oauth.SessionClaims.of({
+          resolve: Effect.fn("Yielded.resolveClaims")(function* ({ subjectId, identity }) {
+            const displayName =
+              subjectId === "settings-owner"
+                ? config.displayName
+                : identity.profile?.displayName || identity.profile?.handle || "Yielded member";
+
+            yield* sql`INSERT INTO oauth_account_profile ("subjectId", "displayName")
+              VALUES (${subjectId}, ${displayName})
+              ON CONFLICT ("subjectId") DO UPDATE SET "displayName" = excluded."displayName"`.pipe(
+              Effect.mapError(() => OAuth.OAuthUnavailable.make({})),
+            );
+
+            return { displayName };
+          }),
+        });
+      }),
+    ),
   ).pipe(Layer.provideMerge(CryptoLive), Layer.provideMerge(FetchHttpClient.layer));
 
   const storage = settingsStorage(config.externalSubject).pipe(Layer.provideMerge(infrastructure));
@@ -93,7 +115,9 @@ export const settingsApplication = (config: SettingsConfiguration) => {
     ),
   );
 
-  return Layer.merge(http.routes().pipe(Layer.provide(live)), sharedSignIn).pipe(
-    Layer.provide(infrastructure),
-  );
+  return Layer.mergeAll(
+    http.routes().pipe(Layer.provide(live)),
+    sharedSignIn,
+    agentIdentityRoutes(agent.secret).pipe(Layer.provide(storage)),
+  ).pipe(Layer.provide(infrastructure));
 };

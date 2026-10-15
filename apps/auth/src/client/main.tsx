@@ -36,9 +36,11 @@ function Failure({ result }: { readonly result: AsyncResult.AsyncResult<unknown,
       : errors.some(Schema.is(OAuth.OAuthActionRequired)) ||
           errors.some(Schema.is(Operations.AuthenticationRequired))
         ? "Sign in again to confirm it is you, then retry this account change."
-        : errors.some(Schema.is(CallbackExpired)) || errors.some(Schema.is(OAuth.OAuthRejected))
-          ? "This attempt is expired, already used, or does not match this browser. Start again; use a linked identity when signing in."
-          : "The request could not be confirmed. Check your sign-in methods before starting a new attempt; do not replay the callback.";
+        : errors.some(Schema.is(CallbackExpired))
+          ? "This browser no longer has the sign-in attempt. Start again in this tab."
+          : errors.some(Schema.is(OAuth.OAuthRejected))
+            ? "GitHub sign-in could not be completed. Start again in this browser."
+            : "The request could not be confirmed. Check your sign-in methods before starting a new attempt; do not replay the callback.";
 
   return (
     <p className="notice error" role="alert">

@@ -1,5 +1,5 @@
 import { Atom as AuthAtom, Client, OAuth, Operations } from "@yielded/auth";
-import { DateTime, Effect, Redacted, Schema } from "effect";
+import { Effect, Redacted, Schema } from "effect";
 import { KeyValueStore } from "effect/persistence";
 import { Atom } from "effect/reactivity";
 
@@ -95,8 +95,8 @@ export const complete = runtime.fn<void>()(
     const saved = get(attempt);
 
     get.set(attempt, null);
-    if (saved === null || saved.expiresAtMillis <= DateTime.toEpochMillis(yield* DateTime.now))
-      return yield* CallbackExpired.make({});
+    // The server owns expiry. A skewed browser clock must not reject a valid flow.
+    if (saved === null) return yield* CallbackExpired.make({});
     const query = yield* Schema.decodeUnknownEffect(CallbackQuery)(raw);
 
     if ((query.code === undefined) === (query.error === undefined))
@@ -141,9 +141,21 @@ export const complete = runtime.fn<void>()(
     } else {
       const result = yield* get.setResult(auth.completeSignIn, input);
 
+      const completion =
+        "completion" in result
+          ? result.completion
+          : result._tag === "RegistrationRequired"
+            ? yield* get.setResult(auth.register, {
+                flowId: saved.flowId,
+                reference: result.reference,
+                commandId: crypto.randomUUID(),
+                registration: {},
+              })
+            : undefined;
+
       if ("returnTarget" in result && result.returnTarget === authorizationPath) {
         get.set(sharedSignIn, true);
-        if ("completion" in result && result.completion._tag === "Authenticated") {
+        if (completion?._tag === "Authenticated") {
           yield* Effect.sync(() => location.replace(authorizationPath));
           get.set(redirecting, true);
 
@@ -156,7 +168,9 @@ export const complete = runtime.fn<void>()(
         notice,
         "_tag" in result && result._tag === "Cancelled"
           ? "Sign-in cancelled. You can continue with this account or start again with GitHub."
-          : "Signed in. Account changes are available for five minutes.",
+          : completion?._tag === "RegistrationAccepted"
+            ? "Your account was created. Continue with GitHub to sign in."
+            : "Signed in. Account changes are available for five minutes.",
       );
     }
   }),
