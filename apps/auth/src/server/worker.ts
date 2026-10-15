@@ -230,11 +230,11 @@ const appGateway = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
               HttpClient.HttpClient,
               Cloudflare.toHttpClient({
                 fetch: (request) =>
-                  HttpServerRequest.toWeb(request).pipe(
+                  HttpServerRequest.toWeb(request.modify({ url: request.originalUrl })).pipe(
                     Effect.mapError((reason) => new HttpServerError.HttpServerError({ reason })),
                     Effect.flatMap((web) =>
                       issuer.fetch(
-                        HttpServerRequest.fromWeb(new Request(web, { redirect: "error" })),
+                        HttpServerRequest.fromWeb(new Request(web, { redirect: "manual" })),
                       ),
                     ),
                   ),
