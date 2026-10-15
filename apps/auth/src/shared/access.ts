@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-import { Scope } from "./scopes";
+import { AuthScope } from "./scopes";
 
 export const AccountId = Schema.String.check(
   Schema.isPattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
@@ -11,7 +11,7 @@ export const AppClaims = Schema.Struct({ accountId: AccountId, displayName: Sche
 export const AppSession = Schema.Struct({
   subjectId: Schema.String,
   ...AppClaims.fields,
-  scopes: Schema.Array(Scope),
+  scopes: Schema.Array(AuthScope),
   expiresAtMillis: Schema.Int,
 });
 

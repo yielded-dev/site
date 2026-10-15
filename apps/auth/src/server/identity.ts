@@ -4,10 +4,10 @@ import { DateTime, Effect, Layer, Redacted, Schema } from "effect";
 import { HttpServerRequest } from "effect/http";
 import { SqlClient } from "effect/sql";
 
-import { Scope } from "../shared/scopes";
+import { authScopes } from "../shared/scopes";
 import { SettingsAuth } from "./auth";
 
-export const yielded = OAuthServer.makeOpenId("yielded", { scopes: Scope });
+export const yielded = OAuthServer.makeOpenId("yielded", { scopes: authScopes });
 
 export const YieldedGrantsLive = OAuthServerPersistence.layer.pipe(
   Layer.provideMerge(

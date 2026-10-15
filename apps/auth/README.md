@@ -79,7 +79,7 @@ HTTPS Worker and secure cookies.
 `src/server/application.ts` composes Auth services with Site policy;
 `access.ts` owns grants and legacy mappings; `gateway.ts` owns the application
 session. `src/client/atoms.ts` owns browser queries and workflows; React renders
-and dispatches. `src/shared/scopes.ts` defines the literal scope schema used by the
+and dispatches. `src/shared/scopes.ts` declares the branded scope values used by the
 issuer, gateway, session schema and example deployments. Shared schemas live in
 `src/shared`.
 

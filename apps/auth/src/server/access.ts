@@ -14,7 +14,7 @@ import {
   type LegacyAccounts,
   type LegacyGrants,
 } from "../shared/access";
-import { AgentScope, Scope } from "../shared/scopes";
+import { AgentHostedModel, AgentScope } from "../shared/scopes";
 import { moduleId, SettingsAuth } from "./auth";
 import { yielded } from "./identity";
 
@@ -226,7 +226,7 @@ export const authorizationLayer = (resource: string) =>
             return {
               scopes: scopes
                 .filter(Schema.is(AgentScope))
-                .filter((scope) => scope !== Scope.make("agent:hosted-model") || funded),
+                .filter((scope) => scope !== AgentHostedModel || funded),
               claims: {
                 accountId,
                 displayName: yield* Schema.decodeUnknownEffect(Schema.String)(

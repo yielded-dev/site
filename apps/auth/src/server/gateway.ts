@@ -4,7 +4,7 @@ import { Clock, Effect, Redacted, Schema, Semaphore } from "effect";
 import { Base64Url } from "effect/encoding";
 
 import { AppClaims, AppSession } from "../shared/access";
-import { AgentScope, Scope } from "../shared/scopes";
+import { agentScopes, authScopes } from "../shared/scopes";
 
 export const accessCookie = "__Host-yielded-access";
 export const sessionCookie = "__Host-yielded-session";
@@ -84,7 +84,7 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
       issuer: config.issuer,
       resource: config.resource,
       publicKeys: config.publicKeys,
-      scopes: Scope,
+      scopes: authScopes,
     });
 
     const mutex = yield* Semaphore.make(1);
@@ -273,7 +273,7 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
             client_id: "yielded-agent",
             redirect_uri: callback,
             resource: config.resource,
-            scope: AgentScope.literals.join(" "),
+            scope: agentScopes.join(" "),
             state: flow.state,
             code_challenge: Base64Url.encode(new Uint8Array(challenge)),
             code_challenge_method: "S256",

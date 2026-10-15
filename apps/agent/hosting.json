@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/yielded-dev/agent.git",
-  "revision": "797596e7cee6ad78c501cd95e81889abd60a4ec6",
+  "revision": "66ad3190193735cf8035a3e0ac46cfafc00817b2",
   "planner": {
     "stackName": "effect-agent-travel-planner",
     "workerName": "effect-agent-travel-planner",
@@ -37,6 +37,8 @@
     },
     "browser": { "binding": "BROWSER", "remote": true },
     "worker_loaders": [{ "binding": "LOADER" }],
+    "r2_buckets": [{ "binding": "TRACES", "bucket_name": "yielded-browser-use-traces" }],
+    "version_metadata": { "binding": "VERSION" },
     "durable_objects": { "bindings": [{ "name": "LAB", "class_name": "BrowserLab" }] },
     "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BrowserLab"] }],
     "ratelimits": [
