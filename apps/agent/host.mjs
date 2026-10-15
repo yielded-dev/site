@@ -11,6 +11,11 @@ const auth = { ...config.auth, AUTH_HOSTED_MODEL_SCOPE: AgentHostedModel };
 const source = path.resolve(here, "../../.sources/agent");
 const command = process.argv[2];
 
+const sourceEnv = {
+  ...process.env,
+  PATH: `${path.join(source, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`,
+};
+
 if (!["prepare", "plan", "deploy"].includes(command))
   throw new Error("Expected prepare, plan or deploy");
 if (!/^[a-f0-9]{40}$/.test(config.revision))
@@ -19,7 +24,7 @@ if (!/^[a-f0-9]{40}$/.test(config.revision))
 function run(cmd, args, cwd = source, extraEnv = {}) {
   const result = spawnSync(cmd, args, {
     cwd,
-    env: { ...process.env, ...extraEnv },
+    env: { ...sourceEnv, ...extraEnv },
     stdio: "inherit",
   });
 
@@ -96,7 +101,7 @@ if (command !== "prepare") {
       ],
       {
         cwd: browser,
-        env: process.env,
+        env: sourceEnv,
         input: JSON.stringify({
           AUTH_YIELDED_CLIENT_SECRET: process.env.AUTH_YIELDED_CLIENT_SECRET,
         }),
