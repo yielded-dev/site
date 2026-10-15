@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/yielded-dev/agent.git",
-  "revision": "a2e71de7ae5197c12b50b998696c86875d2f9a4a",
+  "revision": "e5e6aeb570387076dd56ecee3ff504ccd385585e",
   "planner": {
     "stackName": "effect-agent-travel-planner",
     "workerName": "effect-agent-travel-planner",
