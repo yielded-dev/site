@@ -2,6 +2,7 @@ import * as SqliteClient from "@effect/sql-sqlite-do/SqliteClient";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Config, Effect, Exit, Layer, Schema } from "effect";
 import {
+  HttpClient,
   HttpMiddleware,
   HttpRouter,
   HttpServer,
@@ -194,6 +195,9 @@ const appGateway = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
             reportInput: false,
           });
 
+          const auth: DurableObjectNamespace = env.AUTH;
+          const issuer = Cloudflare.fromCloudflareFetcher(auth.getByName("yielded-auth-v1"));
+
           return yield* makeGateway(
             {
               issuer: config.AUTH_ORIGIN,
@@ -220,7 +224,23 @@ const appGateway = Effect.map(Cloudflare.WorkerEnvironment, (env) =>
                   catch: () => GatewayUnavailable.make({}),
                 }),
             },
-          ).pipe(Effect.provide(CryptoLive));
+          ).pipe(
+            Effect.provide(CryptoLive),
+            Effect.provideService(
+              HttpClient.HttpClient,
+              Cloudflare.toHttpClient({
+                fetch: (request) =>
+                  HttpServerRequest.toWeb(request).pipe(
+                    Effect.mapError((reason) => new HttpServerError.HttpServerError({ reason })),
+                    Effect.flatMap((web) =>
+                      issuer.fetch(
+                        HttpServerRequest.fromWeb(new Request(web, { redirect: "error" })),
+                      ),
+                    ),
+                  ),
+              }),
+            ),
+          );
         }),
         (exit) => (Exit.isSuccess(exit) ? Infinity : 0),
       );
