@@ -1,7 +1,8 @@
 import { OAuthServer } from "@yielded/auth";
 import type { Jwk } from "@yielded/jose";
-import { Clock, Context, Effect, Redacted, Schema, Semaphore } from "effect";
+import { Clock, Effect, Redacted, Schema, Semaphore } from "effect";
 import { Base64Url } from "effect/encoding";
+import { HttpBody, HttpClient } from "effect/http";
 
 import { AppClaims, AppSession } from "../shared/access";
 import { agentScopes, authScopes } from "../shared/scopes";
@@ -40,11 +41,6 @@ export class GatewayUnavailable extends Schema.TaggedError<GatewayUnavailable>()
   "GatewayUnavailable",
   {},
 ) {}
-
-export class GatewayIssuer extends Context.Service<
-  GatewayIssuer,
-  { readonly request: (request: Request) => Effect.Effect<Response, GatewayUnavailable> }
->()("site/auth/GatewayIssuer") {}
 
 class SignInRequired extends Schema.TaggedError<SignInRequired>()("SignInRequired", {}) {}
 class SignInPending extends Schema.TaggedError<SignInPending>()("SignInPending", {}) {}
@@ -85,7 +81,7 @@ export const sessionHandle = (request: Request) => {
  */
 export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorage) =>
   Effect.gen(function* () {
-    const issuer = yield* GatewayIssuer;
+    const issuer = yield* HttpClient.HttpClient;
 
     const verifier = yield* OAuthServer.makeAccessTokenVerifier({
       issuer: config.issuer,
@@ -110,34 +106,32 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
 
     const requestTokens = (fields: Readonly<Record<string, string>>) =>
       Effect.gen(function* () {
-        const body = new URLSearchParams({
+        const body = HttpBody.urlParams({
           client_id: "yielded-agent",
           client_secret: Redacted.value(config.clientSecret),
           ...fields,
         });
 
-        const response = yield* issuer.request(
-          new Request(`${config.issuer}/oauth/yielded/token`, {
-            method: "POST",
-            body,
-            redirect: "error",
-            signal: AbortSignal.timeout(15_000),
-          }),
-        );
+        const response = yield* issuer
+          .post(`${config.issuer}/oauth/yielded/token`, { body })
+          .pipe(Effect.mapError(() => GatewayUnavailable.make({})));
 
         if (response.status === 400 || response.status === 401)
           return yield* SignInRequired.make({});
-        if (!response.ok) return yield* GatewayUnavailable.make({});
+        if (response.status < 200 || response.status >= 300)
+          return yield* GatewayUnavailable.make({});
 
-        const value = yield* Effect.tryPromise({
-          try: () => response.json(),
-          catch: () => GatewayUnavailable.make({}),
-        });
+        const value = yield* response.json.pipe(Effect.mapError(() => GatewayUnavailable.make({})));
 
         return yield* Schema.decodeUnknownEffect(Tokens)(value, { reportInput: false }).pipe(
           Effect.mapError(() => GatewayUnavailable.make({})),
         );
-      });
+      }).pipe(
+        Effect.timeoutOrElse({
+          duration: "15 seconds",
+          orElse: () => GatewayUnavailable.make({}),
+        }),
+      );
 
     const describe = (token: string) =>
       Effect.gen(function* () {
@@ -353,7 +347,7 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
 
           yield* clear;
           if (session !== undefined) {
-            const body = new URLSearchParams({
+            const body = HttpBody.urlParams({
               client_id: "yielded-agent",
               client_secret: Redacted.value(config.clientSecret),
               token: session.refreshToken,
@@ -361,15 +355,8 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
             });
 
             yield* issuer
-              .request(
-                new Request(`${config.issuer}/oauth/yielded/revoke`, {
-                  method: "POST",
-                  body,
-                  redirect: "error",
-                  signal: AbortSignal.timeout(10_000),
-                }),
-              )
-              .pipe(Effect.ignore);
+              .post(`${config.issuer}/oauth/yielded/revoke`, { body })
+              .pipe(Effect.timeout("10 seconds"), Effect.ignore);
           }
 
           return signedOut();
