@@ -1,8 +1,9 @@
 import { Atom as AuthAtom, Client, OAuth, Operations } from "@yielded/auth";
-import { DateTime, Effect, Redacted, Schema } from "effect";
+import { Effect, Redacted, Schema } from "effect";
 import { KeyValueStore } from "effect/persistence";
 import { Atom } from "effect/reactivity";
 
+import { AccessRejected, AccessSettings, type GrantChange } from "../shared/access";
 import { SettingsApi } from "../shared/contract";
 
 // Only public attempt metadata survives a redirect; no code, state, or bearer.
@@ -28,6 +29,48 @@ const authorizationPath = "/oauth/yielded/authorize";
 // Navigation starts before the browser unloads this document. Keep the transition
 // visible through that interval, independently of request completion.
 export const redirecting = Atom.make(false);
+
+const accessRequest = Effect.fn("SiteAccess.request")(function* (change?: typeof GrantChange.Type) {
+  const response = yield* Effect.tryPromise({
+    try: () =>
+      fetch(
+        "/api/access",
+        change === undefined
+          ? { credentials: "same-origin" }
+          : {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(change),
+            },
+      ),
+    catch: () => AccessRejected.make({ reason: "unavailable" }),
+  });
+
+  const value = yield* Effect.tryPromise({
+    try: () => response.json(),
+    catch: () => AccessRejected.make({ reason: "unavailable" }),
+  });
+
+  if (!response.ok) {
+    const error = yield* Schema.decodeUnknownEffect(
+      Schema.Struct({ reason: AccessRejected.fields.reason }),
+    )(value);
+
+    return yield* AccessRejected.make(error);
+  }
+
+  return yield* Schema.decodeUnknownEffect(AccessSettings)(value);
+});
+
+export const accessSettings = runtime.atom(accessRequest());
+
+export const changeAccess = runtime.fn<typeof GrantChange.Type>()(
+  Effect.fn("SiteAccess.change")(function* (change, get) {
+    yield* accessRequest(change);
+    get.refresh(accessSettings);
+  }),
+);
 
 export const continueSignIn = Atom.fnSync((_: void, get) => {
   location.assign(authorizationPath);
@@ -95,8 +138,8 @@ export const complete = runtime.fn<void>()(
     const saved = get(attempt);
 
     get.set(attempt, null);
-    if (saved === null || saved.expiresAtMillis <= DateTime.toEpochMillis(yield* DateTime.now))
-      return yield* CallbackExpired.make({});
+    // The server owns expiry. A skewed browser clock must not reject a valid flow.
+    if (saved === null) return yield* CallbackExpired.make({});
     const query = yield* Schema.decodeUnknownEffect(CallbackQuery)(raw);
 
     if ((query.code === undefined) === (query.error === undefined))
@@ -141,9 +184,21 @@ export const complete = runtime.fn<void>()(
     } else {
       const result = yield* get.setResult(auth.completeSignIn, input);
 
+      const completion =
+        "completion" in result
+          ? result.completion
+          : result._tag === "RegistrationRequired"
+            ? yield* get.setResult(auth.register, {
+                flowId: saved.flowId,
+                reference: result.reference,
+                commandId: crypto.randomUUID(),
+                registration: {},
+              })
+            : undefined;
+
       if ("returnTarget" in result && result.returnTarget === authorizationPath) {
         get.set(sharedSignIn, true);
-        if ("completion" in result && result.completion._tag === "Authenticated") {
+        if (completion?._tag === "Authenticated") {
           yield* Effect.sync(() => location.replace(authorizationPath));
           get.set(redirecting, true);
 
@@ -156,7 +211,9 @@ export const complete = runtime.fn<void>()(
         notice,
         "_tag" in result && result._tag === "Cancelled"
           ? "Sign-in cancelled. You can continue with this account or start again with GitHub."
-          : "Signed in. Account changes are available for five minutes.",
+          : completion?._tag === "RegistrationAccepted"
+            ? "Your account was created. Continue with GitHub to sign in."
+            : "Signed in. Account changes are available for five minutes.",
       );
     }
   }),
@@ -200,7 +257,7 @@ export const signOut = runtime.fn<void>()(
     get.set(cursor, undefined);
     get.set(
       notice,
-      "Signed out of Yielded Auth. Existing Agent sessions are separate; sign out there to end them.",
+      "Signed out of Yielded. App access expires within five minutes; sign out in the app to end it immediately.",
     );
   }),
 );

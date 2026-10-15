@@ -1,0 +1,11 @@
+{
+  "name": "@yielded/site-agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:source": "bun host.mjs prepare",
+    "plan": "bun host.mjs plan",
+    "deploy": "bun host.mjs deploy"
+  }
+}

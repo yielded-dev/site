@@ -135,3 +135,11 @@ secret bindings from the landing page. See the app README for configuration.
 The app consumes published Auth packages pinned in the root catalog. Wait for
 the owning library release before updating these versions, then run `vp install`
 and `vp run ready`. Site does not build, version or publish the library packages.
+
+## Hosted Agent examples
+
+[`apps/agent`](../apps/agent) owns production configuration for the travel planner
+and browser-use examples. Its `hosting.json` pins an Agent commit; `prepare:source`
+checks it out in `.sources/agent`. Generic example code stays in Agent, while
+Site chooses the deployment identities, routes and authorization scopes. See the
+app README for the coordinated initial auth migration and required existing keys.

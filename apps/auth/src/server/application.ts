@@ -1,7 +1,10 @@
 import { Hooks, Http, OAuth, OAuthServer } from "@yielded/auth";
-import { Effect, Layer, type Redacted } from "effect";
+import { Effect, Layer, type Redacted, Schema } from "effect";
 import { FetchHttpClient } from "effect/http";
+import { SqlClient } from "effect/sql";
 
+import { AgentScope } from "../shared/scopes";
+import { AccessPolicy, accessRoutes, authorizationLayer, type LegacyDirectory } from "./access";
 import { SettingsActionsLive, SettingsAuth } from "./auth";
 import { consentLayer } from "./consent";
 import { CryptoLive } from "./crypto";
@@ -17,6 +20,7 @@ export interface SettingsConfiguration {
   readonly externalSubject: string;
   readonly displayName: string;
   readonly stylesheet: string;
+  readonly legacy?: LegacyDirectory;
   readonly agent: {
     readonly origin: URL;
     readonly secret: Redacted.Redacted<string>;
@@ -38,15 +42,39 @@ export const settingsApplication = (config: SettingsConfiguration) => {
     Hooks.LifecycleHooks.empty,
     providerLayer(config),
     OAuth.OAuthReturnTargets.exactRoutes(["/oauth-settings", yielded.paths.authorize]),
-    Layer.succeed(SettingsAuth.strategies.oauth.SessionClaims, {
-      resolve: () => Effect.succeed({ displayName: config.displayName }),
-    }),
+    Layer.effect(
+      SettingsAuth.strategies.oauth.SessionClaims,
+      Effect.gen(function* () {
+        const sql = yield* SqlClient.SqlClient;
+
+        return SettingsAuth.strategies.oauth.SessionClaims.of({
+          resolve: Effect.fn("Yielded.resolveClaims")(function* ({ subjectId, identity }) {
+            const displayName =
+              subjectId === "settings-owner"
+                ? config.displayName
+                : identity.profile?.displayName || identity.profile?.handle || "Yielded member";
+
+            yield* sql`INSERT INTO oauth_account_profile ("subjectId", "displayName")
+              VALUES (${subjectId}, ${displayName})
+              ON CONFLICT ("subjectId") DO UPDATE SET "displayName" = excluded."displayName"`.pipe(
+              Effect.mapError(() => OAuth.OAuthUnavailable.make({})),
+            );
+
+            return { displayName };
+          }),
+        });
+      }),
+    ),
   ).pipe(Layer.provideMerge(CryptoLive), Layer.provideMerge(FetchHttpClient.layer));
 
   const storage = settingsStorage(config.externalSubject).pipe(Layer.provideMerge(infrastructure));
 
   const live = SettingsAuth.layer.pipe(
     Layer.provide(SettingsActionsLive.pipe(Layer.provideMerge(storage))),
+  );
+
+  const access = AccessPolicy.layer(config.origin.origin, config.legacy).pipe(
+    Layer.provide(storage),
   );
 
   const agent = config.agent;
@@ -56,6 +84,10 @@ export const settingsApplication = (config: SettingsConfiguration) => {
       yielded
         .layer({
           origin: config.origin.origin,
+          resource: agent.origin.origin,
+          accessTokenFormat: "jwt",
+          accessTokenLifetimeMillis: 300_000,
+          refreshTokens: true,
           loginPath: "/sign-in",
           keys: { activeKeyId: "v1", keys: [{ id: "v1", material: agent.keys.consent }] },
           identityKeys: {
@@ -69,12 +101,13 @@ export const settingsApplication = (config: SettingsConfiguration) => {
               name: "Yielded Agent",
               redirectUris: [`${agent.origin.origin}/auth/yielded/callback`],
               clientSecret: agent.secret,
-              grantTypes: ["authorization_code"],
+              grantTypes: ["authorization_code", "refresh_token"],
             },
           ],
         })
         .pipe(
           Layer.provide(identityLayer(`${prefix}session`, config.displayName)),
+          Layer.provide(authorizationLayer(agent.origin.origin).pipe(Layer.provide(access))),
           Layer.provide(YieldedGrantsLive),
           Layer.provide(consentLayer(config.stylesheet, config.displayName)),
           Layer.provide(
@@ -83,7 +116,7 @@ export const settingsApplication = (config: SettingsConfiguration) => {
                 Effect.succeed(
                   clientId === "yielded-agent" &&
                     redirectUri === `${agent.origin.origin}/auth/yielded/callback` &&
-                    scopes.every((scope) => scope === "openid" || scope === "profile"),
+                    scopes.every(Schema.is(AgentScope)),
                 ),
             }),
           ),
@@ -93,7 +126,12 @@ export const settingsApplication = (config: SettingsConfiguration) => {
     ),
   );
 
-  return Layer.merge(http.routes().pipe(Layer.provide(live)), sharedSignIn).pipe(
-    Layer.provide(infrastructure),
-  );
+  return Layer.mergeAll(
+    http.routes().pipe(Layer.provide(live)),
+    sharedSignIn,
+    accessRoutes(config.origin.origin, `${prefix}session`, agent.secret).pipe(
+      Layer.provide(live),
+      Layer.provide(access),
+    ),
+  ).pipe(Layer.provide(infrastructure));
 };

@@ -1,16 +1,25 @@
 import { Auth, Hooks, OAuth, Sessions } from "@yielded/auth";
 import { Effect, Layer, Option, Schema } from "effect";
 
-import { SettingsApi } from "../shared/contract";
+import { Registration, SettingsApi } from "../shared/contract";
 import { requirement } from "./sql";
 
 export const moduleId = "browser/oauth-settings";
-export const sessionConfiguration = Sessions.stateAssisted({ maxAge: "8 hours" });
+export const sessionConfiguration = Sessions.stateAssisted({ maxAge: "30 days" });
 
 export const SettingsAuth = Auth.make(SettingsApi, {
   sessions: sessionConfiguration,
   strategies: {
-    oauth: OAuth.make({ namespace: moduleId }),
+    oauth: OAuth.makeRegistration({
+      namespace: moduleId,
+      registration: Registration,
+      authenticate: true,
+      registrationPolicy: {
+        lifetimeMillis: 300_000,
+        maximumVerificationAgeMillis: 300_000,
+        retentionMillis: 600_000,
+      },
+    }),
     accounts: OAuth.makeAccounts({
       namespace: moduleId,
       policy: {

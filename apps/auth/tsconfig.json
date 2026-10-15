@@ -9,8 +9,13 @@
       {
         "name": "@effect/language-service",
         "allowedUnstableApis": [
+          "@effect/atom-react",
+          "@effect/platform-bun",
           "@effect/sql-sqlite-bun",
           "@effect/sql-sqlite-do",
+          "effect/Crypto",
+          "effect/FileSystem",
+          "effect/Path",
           "effect/http",
           "effect/persistence/KeyValueStore",
           "effect/reactivity",

@@ -35,6 +35,7 @@
     "vite-plus": "catalog:"
   },
   "overrides": {
+    "@effect/platform-node-shared": "catalog:",
     "scheduler": "0.27.0"
   },
   "engines": {
@@ -43,19 +44,20 @@
   "packageManager": "bun@1.4.2",
   "catalog": {
     "@astrojs/starlight": "0.42.4",
-    "@effect/platform-node": "4.0.0",
+    "@effect/platform-node": "4.0.4",
+    "@effect/platform-node-shared": "4.0.4",
     "@effect/tsgo": "0.48.1",
     "@types/node": "26.1.2",
     "alchemy": "2.0.0-beta.80",
     "astro": "7.3.5",
-    "effect": "4.0.0",
+    "effect": "4.0.4",
     "typescript": "7.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3",
     "vite-plus": "0.3.3",
-    "@effect/platform-bun": "4.0.0",
-    "@effect/atom-react": "4.0.0",
-    "@effect/sql-sqlite-bun": "4.0.0",
-    "@effect/sql-sqlite-do": "4.0.0",
+    "@effect/platform-bun": "4.0.4",
+    "@effect/atom-react": "4.0.4",
+    "@effect/sql-sqlite-bun": "4.0.4",
+    "@effect/sql-sqlite-do": "4.0.4",
     "@fontsource-variable/ibm-plex-sans": "5.3.0",
     "@fontsource/ibm-plex-mono": "5.3.0",
     "react": "19.3.0",
@@ -63,10 +65,10 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.2.4",
     "@cloudflare/workers-types": "5.20260926.1",
-    "@yielded/auth": "0.1.0-beta.30",
-    "@yielded/auth-persistence": "0.1.0-beta.30",
-    "@yielded/crypto": "0.1.0-beta.30",
-    "@yielded/jose": "0.1.0-beta.30"
+    "@yielded/auth": "0.1.0-beta.41",
+    "@yielded/auth-persistence": "0.1.0-beta.41",
+    "@yielded/crypto": "0.1.0-beta.41",
+    "@yielded/jose": "0.1.0-beta.41"
   },
   "trustedDependencies": [
     "@effect/tsgo-darwin-arm64",
