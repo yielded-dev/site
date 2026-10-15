@@ -14,7 +14,7 @@ import {
   type LegacyAccounts,
   type LegacyGrants,
 } from "../shared/access";
-import { appScope } from "../shared/scopes";
+import { AgentScope, Scope } from "../shared/scopes";
 import { moduleId, SettingsAuth } from "./auth";
 import { yielded } from "./identity";
 
@@ -224,14 +224,9 @@ export const authorizationLayer = (resource: string) =>
               yield* sql`SELECT "displayName" FROM oauth_account_profile WHERE "subjectId" = ${authentication.subjectId}`;
 
             return {
-              scopes: scopes.filter(
-                (scope) =>
-                  scope === "openid" ||
-                  scope === "profile" ||
-                  scope === appScope.planner ||
-                  scope === appScope.browserUse ||
-                  (scope === appScope.hostedModel && funded),
-              ),
+              scopes: scopes
+                .filter(Schema.is(AgentScope))
+                .filter((scope) => scope !== Scope.make("agent:hosted-model") || funded),
               claims: {
                 accountId,
                 displayName: yield* Schema.decodeUnknownEffect(Schema.String)(

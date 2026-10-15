@@ -1,9 +1,18 @@
-export const appScope = {
-  planner: "agent:planner",
-  browserUse: "agent:browser-use",
-  hostedModel: "agent:hosted-model",
-} as const;
+import { Schema } from "effect";
 
-export const appScopes = [appScope.planner, appScope.browserUse, appScope.hostedModel] as const;
+export const Scope = Schema.Literals([
+  "openid",
+  "profile",
+  "email",
+  "agent:planner",
+  "agent:browser-use",
+  "agent:hosted-model",
+]);
 
-export const authScopes = ["openid", "profile", "email", ...appScopes] as const;
+export const AgentScope = Scope.pick([
+  "openid",
+  "profile",
+  "agent:planner",
+  "agent:browser-use",
+  "agent:hosted-model",
+]);

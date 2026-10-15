@@ -1,9 +1,9 @@
 import { Hooks, Http, OAuth, OAuthServer } from "@yielded/auth";
-import { Effect, Layer, type Redacted } from "effect";
+import { Effect, Layer, type Redacted, Schema } from "effect";
 import { FetchHttpClient } from "effect/http";
 import { SqlClient } from "effect/sql";
 
-import { appScopes } from "../shared/scopes";
+import { AgentScope } from "../shared/scopes";
 import { AccessPolicy, accessRoutes, authorizationLayer, type LegacyDirectory } from "./access";
 import { SettingsActionsLive, SettingsAuth } from "./auth";
 import { consentLayer } from "./consent";
@@ -116,12 +116,7 @@ export const settingsApplication = (config: SettingsConfiguration) => {
                 Effect.succeed(
                   clientId === "yielded-agent" &&
                     redirectUri === `${agent.origin.origin}/auth/yielded/callback` &&
-                    scopes.every(
-                      (scope) =>
-                        scope === "openid" ||
-                        scope === "profile" ||
-                        appScopes.some((appScope) => appScope === scope),
-                    ),
+                    scopes.every(Schema.is(AgentScope)),
                 ),
             }),
           ),
