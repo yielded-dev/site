@@ -1,12 +1,12 @@
-import { Scope } from "@yielded/auth";
+import { OAuthScope } from "@yielded/auth";
 import { Schema } from "effect";
 
-export const OpenId = Scope.make("openid");
-export const Profile = Scope.make("profile");
-export const Email = Scope.make("email");
-export const AgentPlanner = Scope.make("agent:planner");
-export const AgentBrowserUse = Scope.make("agent:browser-use");
-export const AgentHostedModel = Scope.make("agent:hosted-model");
+export const OpenId = OAuthScope.make("openid");
+export const Profile = OAuthScope.make("profile");
+export const Email = OAuthScope.make("email");
+export const AgentPlanner = OAuthScope.make("agent:planner");
+export const AgentBrowserUse = OAuthScope.make("agent:browser-use");
+export const AgentHostedModel = OAuthScope.make("agent:hosted-model");
 
 export const agentScopes = [OpenId, Profile, AgentPlanner, AgentBrowserUse, AgentHostedModel];
 export const authScopes = [...agentScopes, Email];
