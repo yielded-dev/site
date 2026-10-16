@@ -55,7 +55,7 @@ and explicit compiler setup.
 
 The hosted auth app and Alchemy compositions use Effect. Before editing them, read
 `node_modules/effect/AGENTS.md` completely and follow its relevant links. Use
-`.agents/skills/effect-development` for focused guidance.
+`.agents/skills/effect/SKILL.md` for focused guidance.
 
 Effect Atom owns auth queries, mutations, shared state and workflows; React renders
 and dispatches. Keep multi-step flows in atoms and credentials out of browser state.
@@ -80,11 +80,9 @@ Dev Kit copies record their source in `.dev-kit-origin.json`. Update them explic
 the transient Dev Kit CLI when requested; the repository does not depend on Dev Kit
 for installation, checks, builds, or CI.
 
-Keep shared skills identical to their published source. Put repository-specific
-commands, gates, and constraints in this file or its linked guidance. Preserve
-checked-in skills for fresh checkouts and cloud agents. Personal fallbacks use
-distinct names and explicit invocation; do not rely on scope to merge or override
-same-named skills.
+Shared engineering guidance is authored in [danieljvdm/skills](https://github.com/danieljvdm/skills); Dev Kit distributes pinned copies. Keep those copies identical to their source and put repository-specific commands, gates, and constraints here or in linked guidance. Preserve checked-in skills and their linked references for fresh checkouts and cloud agents.
+
+For required workflows, read the exact repository skill path linked here. A personal installation may expose the same name; do not assume the client merges the copies or consistently prefers the repository version. Give intentionally different workflows distinct names.
 
 ## Worktree startup
 

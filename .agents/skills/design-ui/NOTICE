@@ -6,3 +6,5 @@ Modified by Dev Kit to preserve task scope, share motion workflows, use
 progressive disclosure, and follow repository-owned tools and state policy.
 Combines apple-design, emil-design-eng, prototype, and pick-ui-library.
 Motion mechanics are consolidated in animate.
+
+Personal stack: copied from Dev Kit commit 2bda762e1573fbfdaf5c5aa6c06abe952d812a0b; added source metadata and portable UI metadata where needed, and removed manual prose wrapping.
