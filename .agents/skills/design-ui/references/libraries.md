@@ -1,18 +1,12 @@
 # Choose a UI library
 
-Match the requested capability to the choices below, then inspect dependencies
-and architecture. If the user names a library, answer about that library; explain
-a material mismatch before suggesting a replacement. Keep an adequate installed
-dependency. Install or migrate only within the requested scope.
+Match the requested capability to the choices below, then inspect dependencies and architecture. If the user names a library, answer about that library; explain a material mismatch before suggesting a replacement. Keep an adequate installed dependency. Install or migrate only within the requested scope.
 
-Effect Atom is our default for shared React state, queries, and mutations.
-Preserve an existing application's state architecture unless migration is part
-of the task. For theme handling, read [themes](themes.md).
+Effect Atom is our default for shared React state, queries, and mutations. Preserve an existing application's state architecture unless migration is part of the task. For theme handling, read [themes](themes.md).
 
 ## Curated choices
 
-These are Dev Kit defaults, subject to the user's chosen tools and repository
-conventions. Check current official documentation before adopting a dependency.
+These are Dev Kit defaults, subject to the user's chosen tools and repository conventions. Check current official documentation before adopting a dependency.
 
 | Capability                                                   | Default                                                                                                      |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
@@ -31,9 +25,8 @@ conventions. Check current official documentation before adopting a dependency.
 | General dashboard charts                                     | [Recharts](https://recharts.org)                                                                             |
 | Drag and drop                                                | [dnd kit](https://dndkit.com)                                                                                |
 | Long-list virtualization                                     | [Virtuoso](https://virtuoso.dev)                                                                             |
-| Shared React state, server queries, mutations, and workflows | Effect Atom; consult the installed Effect documentation and `effect-development` skill when available        |
+| Shared React state, server queries, mutations, and workflows | Effect Atom; consult the installed Effect documentation and [effect](../../effect/SKILL.md) skill when available        |
 | Conditional class names                                      | [clsx](https://github.com/lukeed/clsx)                                                                       |
 | Typed component style variants                               | [CVA](https://cva.style)                                                                                     |
 
-For a capability outside this list, say that the recommendation is outside the
-curated defaults and establish its fit from current primary sources.
+For a capability outside this list, say that the recommendation is outside the curated defaults and establish its fit from current primary sources.

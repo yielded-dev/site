@@ -2,9 +2,11 @@
   "version": 1,
   "selector": "design-ui",
   "name": "design-ui",
-  "baseDigest": "sha256:78462959652ee831c82689cef9fad45c0ecf7a87189bb03f7884a9dc442f3ff7",
+  "baseDigest": "sha256:cccedfa38a9ad20f40f39041d54015552e225eac02d07359116f1bc62810676c",
   "source": {
-    "type": "bundled",
-    "version": "2.0.2"
+    "type": "git",
+    "source": "dan-skills",
+    "repository": "https://github.com/danieljvdm/skills.git",
+    "resolved": "848a8a859f4d4b5d18a59be535c64e586d2808ce"
   }
 }

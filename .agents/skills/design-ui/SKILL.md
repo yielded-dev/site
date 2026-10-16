@@ -2,12 +2,15 @@
 name: design-ui
 description: Build or refine web UI, explore design alternatives, or choose UI libraries and theme handling.
 license: MIT
+metadata:
+  source: "https://github.com/danieljvdm/dev-kit/tree/2bda762e1573fbfdaf5c5aa6c06abe952d812a0b/skills/design-ui"
+  source_commit: "2bda762e1573fbfdaf5c5aa6c06abe952d812a0b"
+  source_skill: "design-ui"
 ---
 
 # Design web UI
 
-Follow the brief and the product's design language. Implement a requested change;
-keep a review to findings unless implementation is also requested.
+Follow the brief and the product's design language. Implement a requested change; keep a review to findings unless implementation is also requested.
 
 Read only what the task needs:
 
@@ -17,13 +20,8 @@ Read only what the task needs:
 - Requested library selection: [libraries](references/libraries.md).
 - Theme switching, persistence, first paint, or hydration: [themes](references/themes.md).
 
-Use the existing tokens and adequate dependencies. Library selection and multiple
-prototypes are optional workflows, not prerequisites to polishing a component.
-For detailed motion work, use `animate` when available, or consult the installed
-animation library and [Emil's motion guidance](https://emilkowal.ski/ui/you-dont-need-animations).
+Use the existing tokens and adequate dependencies. Library selection and multiple prototypes are optional workflows, not prerequisites to polishing a component. For detailed motion work, use `animate` when available, or consult the installed animation library and [Emil's motion guidance](https://emilkowal.ski/ui/you-dont-need-animations).
 
-Judge the changed interaction in context with realistic content, keyboard input,
-and relevant viewport sizes. Preserve deliberate product choices and report what
-could not be verified.
+Judge the changed interaction in context with realistic content, keyboard input, and relevant viewport sizes. Preserve deliberate product choices and report what could not be verified.
 
 Attribution is in [NOTICE](NOTICE); terms are in [LICENSE](LICENSE).
