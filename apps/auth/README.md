@@ -18,7 +18,7 @@ no forced `max_age` and reuses that session. Site's confidential `yielded-agent`
 OpenID client exchanges an authorization code with PKCE. Its exact callback is
 `https://agent.yielded.dev/auth/yielded/callback`.
 
-Site grants `agent:planner` and `agent:browser-use` to active accounts. Only the
+Site grants `agent:planner`, `agent:browser-use` and `agent:sandbox` to active accounts. Only the
 owner and accounts with a hosted-key grant receive `agent:hosted-model`. The owner
 can grant a GitHub username before registration; Site resolves and stores the
 immutable GitHub user ID. Current linked, active identities determine access.
@@ -42,7 +42,7 @@ application authorization; refresh can retain or reduce the original scopes.
 metadata or `null` and renews expired access when possible. `POST /auth/refresh`
 renews access; `POST /auth/logout` revokes the grant and clears cookies. Mutations
 require the exact application origin. Return destinations are limited to the
-configured app origin and example routes.
+configured app origin and example routes, including `/sandbox/`.
 
 ## Existing accounts and data
 

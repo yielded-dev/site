@@ -246,6 +246,7 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
             !(
               target.pathname === "/" ||
               target.pathname.startsWith("/travel/") ||
+              target.pathname.startsWith("/sandbox/") ||
               target.pathname.startsWith("/browser-use")
             )
           )

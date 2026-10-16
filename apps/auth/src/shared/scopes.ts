@@ -6,9 +6,18 @@ export const Profile = OAuthScope.make("profile");
 export const Email = OAuthScope.make("email");
 export const AgentPlanner = OAuthScope.make("agent:planner");
 export const AgentBrowserUse = OAuthScope.make("agent:browser-use");
+export const AgentSandbox = OAuthScope.make("agent:sandbox");
 export const AgentHostedModel = OAuthScope.make("agent:hosted-model");
 
-export const agentScopes = [OpenId, Profile, AgentPlanner, AgentBrowserUse, AgentHostedModel];
+export const agentScopes = [
+  OpenId,
+  Profile,
+  AgentPlanner,
+  AgentBrowserUse,
+  AgentSandbox,
+  AgentHostedModel,
+];
+
 export const authScopes = [...agentScopes, Email];
 
 export const AgentScope = Schema.Literals(agentScopes);
