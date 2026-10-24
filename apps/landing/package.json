@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "preview": "astro preview",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsrs --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@yielded/starlight-theme": "workspace:*",
