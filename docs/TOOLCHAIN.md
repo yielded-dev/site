@@ -1,19 +1,9 @@
 # Repository toolchain
 
 This repository follows the Yielded Bun workspace and Vite+ conventions used by
-`yielded-dev/sync`, `yielded-dev/auth`, and Effect Agent. The root `package.json`
-catalog is the source of truth for exact shared versions.
-
-| Tool        | Version                       |
-| ----------- | ----------------------------- |
-| Bun         | `1.4.2`                       |
-| Vite+       | `0.3.3`                       |
-| TypeScript  | `7.0.2`                       |
-| tsrs        | `0.18.0-ts7.1.0-dev.20260929` |
-| Effect tsrs | `0.2.2`                       |
-| Astro       | `7.3.5`                       |
-| Starlight   | `0.42.4`                      |
-| Alchemy     | `2.0.0-beta.80`               |
+`yielded-dev/sync`, `yielded-dev/auth`, and Effect Agent. The root
+[`package.json`](../package.json) owns exact shared versions in `catalog` and the
+Bun version in `packageManager`.
 
 ## Development
 
@@ -24,9 +14,10 @@ lint with type-aware rules, each workspace's `typecheck`, the root config typech
 and the theme, landing and auth app builds. Astro validates `.astro` files during the
 build. `tsrs` checks the landing and theme TypeScript sources;
 `effect-tsrs diagnostics --type-check --strict` checks auth and root tooling,
-including TypeScript errors and Effect diagnostics. Effect warnings still fail the
-check, while suggestions do not. The existing `@effect/language-service` options
-continue to configure Effect diagnostics.
+including TypeScript errors and Effect diagnostics. Effect errors and warnings fail
+the check, while suggestions do not. The enforced Effect diagnostic policy is
+configured in [`tsconfig.base.json`](../tsconfig.base.json), with auth-specific
+settings in [`apps/auth/tsconfig.json`](../apps/auth/tsconfig.json).
 
 TypeScript remains installed for Astro and Vite+ tooling. `@effect/tsgo` remains
 available for editor quick fixes, refactors, and completions; run `vp run setup:editor`
