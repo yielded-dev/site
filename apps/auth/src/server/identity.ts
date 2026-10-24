@@ -45,7 +45,7 @@ export const identityLayer = (cookieName: string, displayName: string) =>
               authenticatedAtMillis: DateTime.toEpochMillis(session.assurance.authenticatedAt),
               expiresAtMillis: DateTime.toEpochMillis(session.expiresAt),
             })),
-            Effect.catchTag("SessionInvalid", () => Effect.succeed(undefined)),
+            Effect.catchTag("SessionInvalid", () => Effect.as(Effect.void, undefined)),
             Effect.mapError(() => OAuthServer.Unavailable.make({})),
           );
         }),
