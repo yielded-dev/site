@@ -10,7 +10,7 @@ catalog is the source of truth for exact shared versions.
 | Vite+       | `0.3.3`                       |
 | TypeScript  | `7.0.2`                       |
 | tsrs        | `0.18.0-ts7.1.0-dev.20260929` |
-| Effect tsrs | `0.2.1`                       |
+| Effect tsrs | `0.2.2`                       |
 | Astro       | `7.3.5`                       |
 | Starlight   | `0.42.4`                      |
 | Alchemy     | `2.0.0-beta.80`               |
@@ -23,7 +23,7 @@ the pre-commit hook runs Vite+ checks on staged TypeScript and JavaScript.
 lint with type-aware rules, each workspace's `typecheck`, the root config typecheck,
 and the theme, landing and auth app builds. Astro validates `.astro` files during the
 build. `tsrs` checks the landing and theme TypeScript sources;
-`effect-tsrs diagnostics --strict` checks auth and root tooling,
+`effect-tsrs diagnostics --type-check --strict` checks auth and root tooling,
 including TypeScript errors and Effect diagnostics. Effect warnings still fail the
 check, while suggestions do not. The existing `@effect/language-service` options
 continue to configure Effect diagnostics.

@@ -13,7 +13,7 @@
     "changeset:version": "bun x changeset version",
     "ci:version": "bun x changeset version && bun install",
     "dev": "vp run @yielded/landing#dev",
-    "check": "vp check && vp run -r --concurrency-limit 1 typecheck && effect-tsrs diagnostics --project tsconfig.json --strict",
+    "check": "vp check && vp run -r --concurrency-limit 1 typecheck && effect-tsrs diagnostics --type-check --project tsconfig.json --strict",
     "build": "vp run -r build",
     "ready": "vp run check && vp run build",
     "release": "vp run ready && bun x changeset publish",
@@ -71,7 +71,7 @@
     "@yielded/auth-persistence": "0.1.0-beta.41",
     "@yielded/crypto": "0.1.0-beta.41",
     "@yielded/jose": "0.1.0-beta.41",
-    "@yielded/effect-tsrs": "0.2.1",
+    "@yielded/effect-tsrs": "0.2.2",
     "tsrs": "0.18.0-ts7.1.0-dev.20260929"
   },
   "trustedDependencies": [
