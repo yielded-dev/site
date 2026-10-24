@@ -8,16 +8,16 @@
   ],
   "type": "module",
   "scripts": {
-    "prepare": "effect-tsgo patch --typescript && vp config --no-agent --hooks-dir .vite-hooks",
-    "patch:tsgo": "effect-tsgo patch --typescript",
+    "prepare": "vp config --no-agent --hooks-dir .vite-hooks",
     "changeset": "bun x changeset",
     "changeset:version": "bun x changeset version",
     "ci:version": "bun x changeset version && bun install",
     "dev": "vp run @yielded/landing#dev",
-    "check": "vp check && vp run -r --concurrency-limit 1 typecheck && tsc --noEmit -p tsconfig.json",
+    "check": "vp check && vp run -r --concurrency-limit 1 typecheck && effect-tsrs diagnostics --type-check --project tsconfig.json --strict",
     "build": "vp run -r build",
     "ready": "vp run check && vp run build",
-    "release": "vp run ready && bun x changeset publish"
+    "release": "vp run ready && bun x changeset publish",
+    "setup:editor": "effect-tsgo patch --typescript"
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.7.0",
@@ -26,10 +26,12 @@
     "@effect/tsgo": "catalog:",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "catalog:",
+    "@yielded/effect-tsrs": "catalog:",
     "alchemy": "catalog:",
     "effect": "catalog:",
     "oxfmt": "0.68.0",
     "oxlint": "1.83.0",
+    "tsrs": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
@@ -68,7 +70,9 @@
     "@yielded/auth": "0.1.0-beta.41",
     "@yielded/auth-persistence": "0.1.0-beta.41",
     "@yielded/crypto": "0.1.0-beta.41",
-    "@yielded/jose": "0.1.0-beta.41"
+    "@yielded/jose": "0.1.0-beta.41",
+    "@yielded/effect-tsrs": "0.2.2",
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929"
   },
   "trustedDependencies": [
     "@effect/tsgo-darwin-arm64",
