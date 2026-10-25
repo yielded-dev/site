@@ -45,9 +45,6 @@ jobs:
       - name: Install dependencies (frozen, scripts suppressed)
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Patch Effect TypeScript-Go
-        run: ./node_modules/.bin/vp run patch:tsgo
-
       # Changesets 2.31 expects npm info JSON objects; npm 12 returns arrays.
       - name: Set up npm for trusted publishing
         run: npm install --global npm@11.20.0

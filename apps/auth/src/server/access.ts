@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 
 import { OAuthServer } from "@yielded/auth";
-import { Clock, Context, DateTime, Effect, Layer, Redacted, Schema } from "effect";
+import { Clock, Context, Crypto, DateTime, Effect, Layer, Redacted, Schema } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { SqlClient } from "effect/sql";
 
@@ -33,6 +33,7 @@ const administrator = (subjectId: string) => subjectId === "settings-owner";
 const makeAccessPolicy = (issuer: string, legacy?: LegacyDirectory) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
+    const crypto = yield* Crypto.Crypto;
 
     yield* sql`CREATE TABLE IF NOT EXISTS site_app_account (
     app TEXT NOT NULL, subject_id TEXT NOT NULL, account_id TEXT NOT NULL,
@@ -100,7 +101,7 @@ const makeAccessPolicy = (issuer: string, legacy?: LegacyDirectory) =>
       const matches = exact.length > 0 ? exact : candidates;
 
       if (matches.length > 1) return yield* unavailable();
-      const id = matches[0]?.accountId ?? crypto.randomUUID();
+      const id = matches[0]?.accountId ?? (yield* crypto.randomUUIDv4().pipe(Effect.orDie));
 
       // Both uniqueness constraints are required: races converge, different Site subjects never share data.
       yield* sql`INSERT INTO site_app_account (app, subject_id, account_id) VALUES ('agent', ${subjectId}, ${id}) ON CONFLICT DO NOTHING`;

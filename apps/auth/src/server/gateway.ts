@@ -364,26 +364,27 @@ export const makeGateway = (config: GatewayConfiguration, storage: GatewayStorag
 
         return response(null, 404);
       }).pipe(
-        Effect.catchTag("SignInPending", () => Effect.succeed(response("null"))),
-        Effect.catchTag("SignInRequired", () =>
-          Effect.gen(function* () {
-            yield* clear;
-            if (new URL(request.url).pathname === "/auth/yielded/callback")
-              return new Response(
-                "Sign-in expired or was cancelled. Return to the app and sign in again.",
-                {
-                  status: 400,
-                  headers: {
-                    "cache-control": "no-store",
-                    "content-type": "text/plain",
-                    "referrer-policy": "no-referrer",
+        Effect.catchTags({
+          SignInPending: () => Effect.succeed(response("null")),
+          SignInRequired: () =>
+            Effect.gen(function* () {
+              yield* clear;
+              if (new URL(request.url).pathname === "/auth/yielded/callback")
+                return new Response(
+                  "Sign-in expired or was cancelled. Return to the app and sign in again.",
+                  {
+                    status: 400,
+                    headers: {
+                      "cache-control": "no-store",
+                      "content-type": "text/plain",
+                      "referrer-policy": "no-referrer",
+                    },
                   },
-                },
-              );
+                );
 
-            return signedOut();
-          }),
-        ),
+              return signedOut();
+            }),
+        }),
         Effect.orElseSucceed(() =>
           response(JSON.stringify({ error: "Sign-in is temporarily unavailable." }), 503),
         ),

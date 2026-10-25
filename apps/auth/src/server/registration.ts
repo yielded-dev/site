@@ -51,7 +51,7 @@ export const makeRegistrationServices = Effect.gen(function* () {
 
   const accounts = yield* makeAccountsMapping();
 
-  const github = (value: typeof OAuth.OAuthRegistrationIntent.Type) =>
+  const github = (value: OAuth.OAuthRegistrationIntent) =>
     value.identity.provider === "github" &&
     value.identity.issuer === "https://github.com/login/oauth";
 

@@ -1,5 +1,6 @@
 import { Atom as AuthAtom, Client, OAuth, Operations } from "@yielded/auth";
-import { Effect, Redacted, Schema } from "effect";
+import * as WebCrypto from "@yielded/crypto/WebCrypto";
+import { Crypto, Effect, Layer, Redacted, Schema } from "effect";
 import { KeyValueStore } from "effect/persistence";
 import { Atom } from "effect/reactivity";
 
@@ -17,7 +18,18 @@ const Attempt = Schema.Struct({
 export class CallbackExpired extends Schema.TaggedError<CallbackExpired>()("CallbackExpired", {}) {}
 
 const factory = Atom.context();
-const runtime = factory(KeyValueStore.layerStorage(() => sessionStorage));
+
+const runtime = factory(
+  Layer.merge(
+    KeyValueStore.layerStorage(() => sessionStorage),
+    WebCrypto.layerCryptoWeb,
+  ),
+);
+
+const randomUUID = Effect.flatMap(Crypto.Crypto, (crypto) => crypto.randomUUIDv4()).pipe(
+  Effect.orDie,
+);
+
 const SettingsClient = Client.make(SettingsApi, { baseUrl: location.origin });
 
 export const auth = AuthAtom.make(SettingsClient, { runtime: factory });
@@ -104,7 +116,7 @@ export const begin = runtime.fn<"sign-in" | "link" | "switch">()(
 
     const started =
       kind === "link"
-        ? yield* get.setResult(auth.linkAccount, { ...input, flowId: crypto.randomUUID() })
+        ? yield* get.setResult(auth.linkAccount, { ...input, flowId: yield* randomUUID })
         : yield* get.setResult(auth.signIn, input);
 
     get.set(attempt, {
@@ -191,7 +203,7 @@ export const complete = runtime.fn<void>()(
             ? yield* get.setResult(auth.register, {
                 flowId: saved.flowId,
                 reference: result.reference,
-                commandId: crypto.randomUUID(),
+                commandId: yield* randomUUID,
                 registration: {},
               })
             : undefined;
@@ -241,7 +253,7 @@ export const initialize = runtime.fn<void>()(
 export const unlink = runtime.fn<string>()(
   Effect.fn("OAuthSettings.unlink")(function* (credentialId, get) {
     get.set(notice, null);
-    yield* get.setResult(auth.unlinkAccount, { credentialId, commandId: crypto.randomUUID() });
+    yield* get.setResult(auth.unlinkAccount, { credentialId, commandId: yield* randomUUID });
     get.set(cursor, undefined);
     get.set(
       notice,

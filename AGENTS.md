@@ -19,8 +19,7 @@ dependencies and `workspace:*` for internal packages, except in the published
 theme manifest (see below). After dependency changes, run `vp install` and the
 relevant verification.
 
-Before handoff, run `vp run ready`. CI runs the same command after a frozen install
-and explicit compiler setup.
+Before handoff, run `vp run ready`. CI runs the same command after a frozen install.
 
 ## Boundaries
 
