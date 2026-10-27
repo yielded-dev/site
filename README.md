@@ -17,6 +17,8 @@
   <a href="https://yielded.dev/auth/">Auth</a>
   ·
   <a href="https://effect-agent.com/">Agent</a>
+  ·
+  <a href="https://yielded.dev/sync/">Sync</a>
 </p>
 
 The yielded.dev landing page, hosted Yielded sign-in service, and shared Starlight theme.

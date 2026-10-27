@@ -49,13 +49,12 @@ export const libraries: ReadonlyArray<Library> = [
   {
     id: "sync",
     name: "Sync",
-    tagline: "Realtime state, with receipts.",
-    description:
-      "Effect-native contracts, an authoritative server, and scoped clients that keep the same command identity through retries.",
+    tagline: "Shared state for Effect apps.",
+    description: "Keep clients in step with server state through live updates and typed actions.",
     base: "/sync",
     repository: "https://github.com/yielded-dev/sync",
     install: "bun add @yielded/sync@beta",
-    status: "soon",
+    status: "live",
     accent: { dark: "#c6f36a", light: "#3f6b00" },
   },
 ];
