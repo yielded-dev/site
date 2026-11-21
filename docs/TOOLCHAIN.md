@@ -13,7 +13,7 @@ the pre-commit hook runs Vite+ checks on staged TypeScript and JavaScript.
 lint with type-aware rules, each workspace's `typecheck`, the root config typecheck,
 and the theme, landing and auth app builds. Astro validates `.astro` files during the
 build. `tsrs` checks the landing and theme TypeScript sources;
-`effect-tsrs diagnostics --type-check --strict` checks auth and root tooling,
+`effect-tsgo tsrs --noEmit -p tsconfig.json` checks auth and root tooling,
 including TypeScript errors and Effect diagnostics. Effect errors and warnings fail
 the check, while suggestions do not. The enforced Effect diagnostic policy is
 configured in [`tsconfig.base.json`](../tsconfig.base.json), with auth-specific
